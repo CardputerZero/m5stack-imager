@@ -487,7 +487,7 @@ TEST_CASE("CustomisationGenerator cloud-init handles SSH public key only (no use
     QString yaml = QString::fromUtf8(userdata);
     
     // Should generate users section even without explicit username
-    REQUIRE_THAT(yaml.toStdString(), ContainsSubstring("enable_ssh: true"));
+    REQUIRE_THAT(yaml.toStdString(), ContainsSubstring("[ systemctl, enable, --now, ssh ]"));
     REQUIRE_THAT(yaml.toStdString(), ContainsSubstring("user:"));
     REQUIRE_THAT(yaml.toStdString(), ContainsSubstring("  name: pi"));
     REQUIRE_THAT(yaml.toStdString(), ContainsSubstring("ssh_authorized_keys:"));
@@ -662,7 +662,7 @@ TEST_CASE("CustomisationGenerator generates cloud-init user-data with SSH user",
     QByteArray userdata = CustomisationGenerator::generateCloudInitUserData(settings, QString(), false, true, "testuser");
     QString yaml = QString::fromUtf8(userdata);
     
-    REQUIRE_THAT(yaml.toStdString(), ContainsSubstring("enable_ssh: true"));
+    REQUIRE_THAT(yaml.toStdString(), ContainsSubstring("[ systemctl, enable, --now, ssh ]"));
     REQUIRE_THAT(yaml.toStdString(), ContainsSubstring("user:"));
     REQUIRE_THAT(yaml.toStdString(), ContainsSubstring("  name: testuser"));
     REQUIRE_THAT(yaml.toStdString(), ContainsSubstring("shell: /bin/bash"));
@@ -703,7 +703,7 @@ TEST_CASE("CustomisationGenerator generates cloud-init user-data with SSH keys",
     QByteArray userdata = CustomisationGenerator::generateCloudInitUserData(settings, QString(), false, true, "testuser");
     QString yaml = QString::fromUtf8(userdata);
     
-    REQUIRE_THAT(yaml.toStdString(), ContainsSubstring("enable_ssh: true"));
+    REQUIRE_THAT(yaml.toStdString(), ContainsSubstring("[ systemctl, enable, --now, ssh ]"));
     REQUIRE_THAT(yaml.toStdString(), ContainsSubstring("ssh_authorized_keys:"));
     REQUIRE_THAT(yaml.toStdString(), ContainsSubstring("- \"ssh-rsa AAAAB3...key1\""));
     REQUIRE_THAT(yaml.toStdString(), ContainsSubstring("- \"ssh-rsa AAAAB3...key2\""));
@@ -1242,7 +1242,7 @@ TEST_CASE("Independent step: SSH with password auth only", "[cloudinit][independ
     QString yaml = QString::fromUtf8(userdata);
     
     // SSH configuration MUST be generated
-    REQUIRE_THAT(yaml.toStdString(), ContainsSubstring("enable_ssh: true"));
+    REQUIRE_THAT(yaml.toStdString(), ContainsSubstring("[ systemctl, enable, --now, ssh ]"));
     REQUIRE_THAT(yaml.toStdString(), ContainsSubstring("ssh_pwauth: true"));
     
     // No user section without credentials
@@ -1272,7 +1272,7 @@ TEST_CASE("Independent step: SSH with public keys only", "[cloudinit][independen
     QString yaml = QString::fromUtf8(userdata);
     
     // SSH configuration MUST be generated
-    REQUIRE_THAT(yaml.toStdString(), ContainsSubstring("enable_ssh: true"));
+    REQUIRE_THAT(yaml.toStdString(), ContainsSubstring("[ systemctl, enable, --now, ssh ]"));
     REQUIRE_THAT(yaml.toStdString(), ContainsSubstring("ssh_pwauth: false"));
     
     // User section is created for SSH key deployment (using currentUser fallback)
@@ -1584,7 +1584,7 @@ TEST_CASE("Combined steps: Full customization with SSH", "[cloudinit][combined]"
     REQUIRE_THAT(userdataYaml.toStdString(), ContainsSubstring("spi: true"));
     
     // SSH configuration must be present
-    REQUIRE_THAT(userdataYaml.toStdString(), ContainsSubstring("enable_ssh: true"));
+    REQUIRE_THAT(userdataYaml.toStdString(), ContainsSubstring("[ systemctl, enable, --now, ssh ]"));
     REQUIRE_THAT(userdataYaml.toStdString(), ContainsSubstring("ssh_pwauth: true"));
     
     // WiFi in network config

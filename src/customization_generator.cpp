@@ -430,10 +430,13 @@ QByteArray CustomisationGenerator::generateCloudInitUserData(const QVariantMap& 
         push(QString(), cloud); // blank line
     }
     
-    // SSH daemon configuration - separate from user creation
+    // SSH daemon configuration - separate from user creation.
+    // cc_ssh only writes host keys / authorized_keys; it does not enable the
+    // sshd unit. Ubuntu cloud images ship sshd enabled, but RPi OS does not -
+    // so we activate the unit via runcmd below. The (non-existent in upstream
+    // cloud-init) `enable_ssh: true` key was dropped because it was silently
+    // ignored on every distro.
     if (sshEnabled) {
-        push(QStringLiteral("enable_ssh: true"), cloud);
-        
         if (sshPasswordAuth) {
             push(QStringLiteral("ssh_pwauth: true"), cloud);
         } else if (!sshAuthorizedKeys.isEmpty() || !sshPublicKey.isEmpty()) {
@@ -502,11 +505,19 @@ QByteArray CustomisationGenerator::generateCloudInitUserData(const QVariantMap& 
     // Only create runcmd if we actually have commands to add
     bool needsRuncmdForWifi = !wifiCountry.isEmpty() && ssid.isEmpty();
     bool needsRuncmdForPiConnect = piConnectEnabled && !cleanToken.isEmpty();
-    bool needsRuncmd = needsRuncmdForPiConnect || needsRuncmdForWifi || needsRuncmdForSudo;
+    bool needsRuncmdForSsh = sshEnabled;
+    bool needsRuncmd = needsRuncmdForPiConnect || needsRuncmdForWifi || needsRuncmdForSudo || needsRuncmdForSsh;
 
     if (needsRuncmd) {
         push(QString(), cloud);
         push(QStringLiteral("runcmd:"), cloud);
+
+        if (needsRuncmdForSsh) {
+            // cc_ssh writes host keys / authorized_keys but never starts sshd.
+            // RPi OS images ship sshd disabled, so enable it explicitly here.
+            // No-op on Ubuntu Server where ssh is already enabled.
+            push(QStringLiteral("  - [ systemctl, enable, --now, ssh ]"), cloud);
+        }
 
         // Passwordless sudo: create sudoers file explicitly via runcmd.
         // The sudo: user property works on standard cloud-init but is not
