@@ -488,8 +488,8 @@ TEST_CASE("CustomisationGenerator cloud-init handles SSH public key only (no use
     
     // Should generate users section even without explicit username
     REQUIRE_THAT(yaml.toStdString(), ContainsSubstring("enable_ssh: true"));
-    REQUIRE_THAT(yaml.toStdString(), ContainsSubstring("users:"));
-    REQUIRE_THAT(yaml.toStdString(), ContainsSubstring("- name: pi"));
+    REQUIRE_THAT(yaml.toStdString(), ContainsSubstring("user:"));
+    REQUIRE_THAT(yaml.toStdString(), ContainsSubstring("  name: pi"));
     REQUIRE_THAT(yaml.toStdString(), ContainsSubstring("ssh_authorized_keys:"));
     REQUIRE_THAT(yaml.toStdString(), ContainsSubstring("ssh-ed25519"));
     REQUIRE_THAT(yaml.toStdString(), ContainsSubstring("lock_passwd: true"));
@@ -663,8 +663,8 @@ TEST_CASE("CustomisationGenerator generates cloud-init user-data with SSH user",
     QString yaml = QString::fromUtf8(userdata);
     
     REQUIRE_THAT(yaml.toStdString(), ContainsSubstring("enable_ssh: true"));
-    REQUIRE_THAT(yaml.toStdString(), ContainsSubstring("users:"));
-    REQUIRE_THAT(yaml.toStdString(), ContainsSubstring("- name: testuser"));
+    REQUIRE_THAT(yaml.toStdString(), ContainsSubstring("user:"));
+    REQUIRE_THAT(yaml.toStdString(), ContainsSubstring("  name: testuser"));
     REQUIRE_THAT(yaml.toStdString(), ContainsSubstring("shell: /bin/bash"));
     REQUIRE_THAT(yaml.toStdString(), ContainsSubstring("lock_passwd: false"));
     // Password hash should be quoted for proper YAML parsing
@@ -683,8 +683,8 @@ TEST_CASE("CustomisationGenerator generates cloud-init user-data with user crede
     QString yaml = QString::fromUtf8(userdata);
     
     // User configuration MUST be generated even without SSH
-    REQUIRE_THAT(yaml.toStdString(), ContainsSubstring("users:"));
-    REQUIRE_THAT(yaml.toStdString(), ContainsSubstring("- name: localuser"));
+    REQUIRE_THAT(yaml.toStdString(), ContainsSubstring("user:"));
+    REQUIRE_THAT(yaml.toStdString(), ContainsSubstring("  name: localuser"));
     REQUIRE_THAT(yaml.toStdString(), ContainsSubstring("shell: /bin/bash"));
     REQUIRE_THAT(yaml.toStdString(), ContainsSubstring("lock_passwd: false"));
     REQUIRE_THAT(yaml.toStdString(), ContainsSubstring("passwd: \"$5$fakesalt$fakehash456\""));
@@ -723,7 +723,7 @@ TEST_CASE("CustomisationGenerator cloud-init passwordless sudo when explicitly e
     QByteArray userdata = CustomisationGenerator::generateCloudInitUserData(settings, QString(), false, false, "testuser");
     QString yaml = QString::fromUtf8(userdata);
 
-    REQUIRE_THAT(yaml.toStdString(), ContainsSubstring("- name: testuser"));
+    REQUIRE_THAT(yaml.toStdString(), ContainsSubstring("  name: testuser"));
     // sudo: user property for standard cloud-init
     REQUIRE_THAT(yaml.toStdString(), ContainsSubstring("sudo: ALL=(ALL) NOPASSWD:ALL"));
     // runcmd fallback for implementations that don't process sudo: user property
@@ -741,7 +741,7 @@ TEST_CASE("CustomisationGenerator cloud-init no passwordless sudo by default", "
     QByteArray userdata = CustomisationGenerator::generateCloudInitUserData(settings, QString(), false, false, "testuser");
     QString yaml = QString::fromUtf8(userdata);
 
-    REQUIRE_THAT(yaml.toStdString(), ContainsSubstring("- name: testuser"));
+    REQUIRE_THAT(yaml.toStdString(), ContainsSubstring("  name: testuser"));
     REQUIRE_THAT(yaml.toStdString(), !ContainsSubstring("sudo: ALL=(ALL) NOPASSWD:ALL"));
 }
 
@@ -1064,7 +1064,7 @@ TEST_CASE("Independent step: Hostname only", "[cloudinit][independent][hostname]
     REQUIRE_THAT(yaml.toStdString(), ContainsSubstring("preserve_sources_list: true"));
     
     // No other customization should be present
-    REQUIRE_THAT(yaml.toStdString(), !ContainsSubstring("users:"));
+    REQUIRE_THAT(yaml.toStdString(), !ContainsSubstring("user:"));
     REQUIRE_THAT(yaml.toStdString(), !ContainsSubstring("enable_ssh:"));
     REQUIRE_THAT(yaml.toStdString(), !ContainsSubstring("timezone:"));
     REQUIRE_THAT(yaml.toStdString(), !ContainsSubstring("keyboard:"));
@@ -1093,7 +1093,7 @@ TEST_CASE("Independent step: Timezone only", "[cloudinit][independent][locale]")
     
     // No other customization should be present
     REQUIRE_THAT(yaml.toStdString(), !ContainsSubstring("hostname:"));
-    REQUIRE_THAT(yaml.toStdString(), !ContainsSubstring("users:"));
+    REQUIRE_THAT(yaml.toStdString(), !ContainsSubstring("user:"));
     REQUIRE_THAT(yaml.toStdString(), !ContainsSubstring("enable_ssh:"));
     REQUIRE_THAT(yaml.toStdString(), !ContainsSubstring("keyboard:"));
     REQUIRE_THAT(yaml.toStdString(), !ContainsSubstring("rpi:"));
@@ -1123,7 +1123,7 @@ TEST_CASE("Independent step: Keyboard only", "[cloudinit][independent][locale]")
     
     // No other customization should be present
     REQUIRE_THAT(yaml.toStdString(), !ContainsSubstring("hostname:"));
-    REQUIRE_THAT(yaml.toStdString(), !ContainsSubstring("users:"));
+    REQUIRE_THAT(yaml.toStdString(), !ContainsSubstring("user:"));
     REQUIRE_THAT(yaml.toStdString(), !ContainsSubstring("enable_ssh:"));
     REQUIRE_THAT(yaml.toStdString(), !ContainsSubstring("timezone:"));
     REQUIRE_THAT(yaml.toStdString(), !ContainsSubstring("rpi:"));
@@ -1153,7 +1153,7 @@ TEST_CASE("Independent step: Locale (timezone + keyboard)", "[cloudinit][indepen
     
     // No other customization should be present
     REQUIRE_THAT(yaml.toStdString(), !ContainsSubstring("hostname:"));
-    REQUIRE_THAT(yaml.toStdString(), !ContainsSubstring("users:"));
+    REQUIRE_THAT(yaml.toStdString(), !ContainsSubstring("user:"));
     REQUIRE_THAT(yaml.toStdString(), !ContainsSubstring("enable_ssh:"));
     REQUIRE_THAT(yaml.toStdString(), !ContainsSubstring("rpi:"));
 }
@@ -1169,8 +1169,8 @@ TEST_CASE("Independent step: User credentials only (no SSH)", "[cloudinit][indep
     QString yaml = QString::fromUtf8(userdata);
     
     // User configuration MUST be generated independently of SSH
-    REQUIRE_THAT(yaml.toStdString(), ContainsSubstring("users:"));
-    REQUIRE_THAT(yaml.toStdString(), ContainsSubstring("- name: alice"));
+    REQUIRE_THAT(yaml.toStdString(), ContainsSubstring("user:"));
+    REQUIRE_THAT(yaml.toStdString(), ContainsSubstring("  name: alice"));
     REQUIRE_THAT(yaml.toStdString(), ContainsSubstring("shell: /bin/bash"));
     REQUIRE_THAT(yaml.toStdString(), ContainsSubstring("lock_passwd: false"));
     REQUIRE_THAT(yaml.toStdString(), ContainsSubstring("passwd: \"$6$rounds=4096$salt$hashvalue\""));
@@ -1225,7 +1225,7 @@ TEST_CASE("Independent step: WiFi only", "[cloudinit][independent][wifi]") {
     
     // No other customization in userdata
     REQUIRE_THAT(userdataYaml.toStdString(), !ContainsSubstring("hostname:"));
-    REQUIRE_THAT(userdataYaml.toStdString(), !ContainsSubstring("users:"));
+    REQUIRE_THAT(userdataYaml.toStdString(), !ContainsSubstring("user:"));
     REQUIRE_THAT(userdataYaml.toStdString(), !ContainsSubstring("enable_ssh:"));
     REQUIRE_THAT(userdataYaml.toStdString(), !ContainsSubstring("timezone:"));
     REQUIRE_THAT(userdataYaml.toStdString(), !ContainsSubstring("keyboard:"));
@@ -1246,7 +1246,7 @@ TEST_CASE("Independent step: SSH with password auth only", "[cloudinit][independ
     REQUIRE_THAT(yaml.toStdString(), ContainsSubstring("ssh_pwauth: true"));
     
     // No user section without credentials
-    REQUIRE_THAT(yaml.toStdString(), !ContainsSubstring("users:"));
+    REQUIRE_THAT(yaml.toStdString(), !ContainsSubstring("user:"));
     
     // No other customization should be present
     REQUIRE_THAT(yaml.toStdString(), !ContainsSubstring("hostname:"));
@@ -1276,8 +1276,8 @@ TEST_CASE("Independent step: SSH with public keys only", "[cloudinit][independen
     REQUIRE_THAT(yaml.toStdString(), ContainsSubstring("ssh_pwauth: false"));
     
     // User section is created for SSH key deployment (using currentUser fallback)
-    REQUIRE_THAT(yaml.toStdString(), ContainsSubstring("users:"));
-    REQUIRE_THAT(yaml.toStdString(), ContainsSubstring("- name: defaultuser"));
+    REQUIRE_THAT(yaml.toStdString(), ContainsSubstring("user:"));
+    REQUIRE_THAT(yaml.toStdString(), ContainsSubstring("  name: defaultuser"));
     REQUIRE_THAT(yaml.toStdString(), ContainsSubstring("ssh_authorized_keys:"));
     REQUIRE_THAT(yaml.toStdString(), ContainsSubstring("- \"ssh-ed25519"));
     REQUIRE_THAT(yaml.toStdString(), ContainsSubstring("lock_passwd: true"));
@@ -1306,7 +1306,7 @@ TEST_CASE("Independent step: Interfaces only (I2C)", "[cloudinit][independent][i
     
     // No other customization should be present
     REQUIRE_THAT(yaml.toStdString(), !ContainsSubstring("hostname:"));
-    REQUIRE_THAT(yaml.toStdString(), !ContainsSubstring("users:"));
+    REQUIRE_THAT(yaml.toStdString(), !ContainsSubstring("user:"));
     REQUIRE_THAT(yaml.toStdString(), !ContainsSubstring("enable_ssh:"));
     REQUIRE_THAT(yaml.toStdString(), !ContainsSubstring("timezone:"));
     REQUIRE_THAT(yaml.toStdString(), !ContainsSubstring("keyboard:"));
@@ -1395,8 +1395,8 @@ TEST_CASE("Independent step: Pi Connect only (with required user)", "[cloudinit]
     QString yaml = QString::fromUtf8(userdata);
     
     // User configuration MUST be generated
-    REQUIRE_THAT(yaml.toStdString(), ContainsSubstring("users:"));
-    REQUIRE_THAT(yaml.toStdString(), ContainsSubstring("- name: connectuser"));
+    REQUIRE_THAT(yaml.toStdString(), ContainsSubstring("user:"));
+    REQUIRE_THAT(yaml.toStdString(), ContainsSubstring("  name: connectuser"));
     
     // Pi Connect configuration MUST be generated
     REQUIRE_THAT(yaml.toStdString(), ContainsSubstring("runcmd:"));
@@ -1438,8 +1438,8 @@ TEST_CASE("Combined steps: User + Hostname (no SSH)", "[cloudinit][combined]") {
     
     // Both must be generated
     REQUIRE_THAT(yaml.toStdString(), ContainsSubstring("hostname: workstation"));
-    REQUIRE_THAT(yaml.toStdString(), ContainsSubstring("users:"));
-    REQUIRE_THAT(yaml.toStdString(), ContainsSubstring("- name: developer"));
+    REQUIRE_THAT(yaml.toStdString(), ContainsSubstring("user:"));
+    REQUIRE_THAT(yaml.toStdString(), ContainsSubstring("  name: developer"));
     REQUIRE_THAT(yaml.toStdString(), ContainsSubstring("passwd:"));
     
     // SSH not enabled
@@ -1461,8 +1461,8 @@ TEST_CASE("Combined steps: User + WiFi (no SSH)", "[cloudinit][combined]") {
     QString netcfgYaml = QString::fromUtf8(netcfg);
     
     // User config must be generated
-    REQUIRE_THAT(userdataYaml.toStdString(), ContainsSubstring("users:"));
-    REQUIRE_THAT(userdataYaml.toStdString(), ContainsSubstring("- name: wifiuser"));
+    REQUIRE_THAT(userdataYaml.toStdString(), ContainsSubstring("user:"));
+    REQUIRE_THAT(userdataYaml.toStdString(), ContainsSubstring("  name: wifiuser"));
     
     // WiFi config must be generated
     REQUIRE_THAT(netcfgYaml.toStdString(), ContainsSubstring("\"OfficeWiFi\":"));
@@ -1485,8 +1485,8 @@ TEST_CASE("Combined steps: All locale + User (no SSH)", "[cloudinit][combined]")
     // All must be generated
     REQUIRE_THAT(yaml.toStdString(), ContainsSubstring("timezone: Asia/Tokyo"));
     REQUIRE_THAT(yaml.toStdString(), ContainsSubstring("layout: \"jp\""));
-    REQUIRE_THAT(yaml.toStdString(), ContainsSubstring("users:"));
-    REQUIRE_THAT(yaml.toStdString(), ContainsSubstring("- name: jpuser"));
+    REQUIRE_THAT(yaml.toStdString(), ContainsSubstring("user:"));
+    REQUIRE_THAT(yaml.toStdString(), ContainsSubstring("  name: jpuser"));
     
     // SSH not enabled
     REQUIRE_THAT(yaml.toStdString(), !ContainsSubstring("enable_ssh:"));
@@ -1504,8 +1504,8 @@ TEST_CASE("Combined steps: User + Interfaces (no SSH)", "[cloudinit][combined]")
     QString yaml = QString::fromUtf8(userdata);
     
     // User must be generated
-    REQUIRE_THAT(yaml.toStdString(), ContainsSubstring("users:"));
-    REQUIRE_THAT(yaml.toStdString(), ContainsSubstring("- name: iotuser"));
+    REQUIRE_THAT(yaml.toStdString(), ContainsSubstring("user:"));
+    REQUIRE_THAT(yaml.toStdString(), ContainsSubstring("  name: iotuser"));
     
     // Interfaces must be generated
     REQUIRE_THAT(yaml.toStdString(), ContainsSubstring("rpi:"));
@@ -1539,8 +1539,8 @@ TEST_CASE("Combined steps: Full customization without SSH", "[cloudinit][combine
     REQUIRE_THAT(userdataYaml.toStdString(), ContainsSubstring("hostname: fullpi"));
     REQUIRE_THAT(userdataYaml.toStdString(), ContainsSubstring("timezone: Europe/Berlin"));
     REQUIRE_THAT(userdataYaml.toStdString(), ContainsSubstring("layout: \"de\""));
-    REQUIRE_THAT(userdataYaml.toStdString(), ContainsSubstring("users:"));
-    REQUIRE_THAT(userdataYaml.toStdString(), ContainsSubstring("- name: fulluser"));
+    REQUIRE_THAT(userdataYaml.toStdString(), ContainsSubstring("user:"));
+    REQUIRE_THAT(userdataYaml.toStdString(), ContainsSubstring("  name: fulluser"));
     REQUIRE_THAT(userdataYaml.toStdString(), ContainsSubstring("passwd:"));
     REQUIRE_THAT(userdataYaml.toStdString(), ContainsSubstring("rpi:"));
     REQUIRE_THAT(userdataYaml.toStdString(), ContainsSubstring("i2c: true"));
@@ -1577,8 +1577,8 @@ TEST_CASE("Combined steps: Full customization with SSH", "[cloudinit][combined]"
     REQUIRE_THAT(userdataYaml.toStdString(), ContainsSubstring("hostname: sshpi"));
     REQUIRE_THAT(userdataYaml.toStdString(), ContainsSubstring("timezone: UTC"));
     REQUIRE_THAT(userdataYaml.toStdString(), ContainsSubstring("layout: \"us\""));
-    REQUIRE_THAT(userdataYaml.toStdString(), ContainsSubstring("users:"));
-    REQUIRE_THAT(userdataYaml.toStdString(), ContainsSubstring("- name: sshuser"));
+    REQUIRE_THAT(userdataYaml.toStdString(), ContainsSubstring("user:"));
+    REQUIRE_THAT(userdataYaml.toStdString(), ContainsSubstring("  name: sshuser"));
     REQUIRE_THAT(userdataYaml.toStdString(), ContainsSubstring("passwd:"));
     REQUIRE_THAT(userdataYaml.toStdString(), ContainsSubstring("rpi:"));
     REQUIRE_THAT(userdataYaml.toStdString(), ContainsSubstring("spi: true"));
@@ -1606,7 +1606,7 @@ TEST_CASE("CustomisationGenerator handles empty cloud-init settings gracefully",
     REQUIRE_THAT(userdataYaml.toStdString(), ContainsSubstring("manage_resolv_conf: false"));
     // Should NOT have any user-specific configuration
     REQUIRE_THAT(userdataYaml.toStdString(), !ContainsSubstring("hostname:"));
-    REQUIRE_THAT(userdataYaml.toStdString(), !ContainsSubstring("users:"));
+    REQUIRE_THAT(userdataYaml.toStdString(), !ContainsSubstring("user:"));
     REQUIRE_THAT(userdataYaml.toStdString(), !ContainsSubstring("enable_ssh:"));
     REQUIRE_THAT(userdataYaml.toStdString(), !ContainsSubstring("timezone:"));
     REQUIRE_THAT(userdataYaml.toStdString(), !ContainsSubstring("keyboard:"));

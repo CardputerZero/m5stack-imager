@@ -384,13 +384,18 @@ QByteArray CustomisationGenerator::generateCloudInitUserData(const QVariantMap& 
     const bool hasUserCredentials = !userName.isEmpty() && !userPass.isEmpty();
     const bool hasSshKeys = sshEnabled && (!sshPublicKey.isEmpty() || !sshAuthorizedKeys.isEmpty());
 
-    // Determine effective username (used by both users: section and runcmd)
+    // Determine effective username (used by both user: section and runcmd)
     const QString effectiveUser = userName.isEmpty() ? (sshEnabled ? currentUser : QStringLiteral("pi")) : userName;
     const bool needsRuncmdForSudo = passwordlessSudo && (hasUserCredentials || hasSshKeys);
 
     if (hasUserCredentials || hasSshKeys) {
-        push(QStringLiteral("users:"), cloud);
-        push(QStringLiteral("- name: ") + effectiveUser, cloud);
+        // Use singular `user:` so cloud-init renames/extends the distro's
+        // default user and preserves its group memberships (sudo, adm, gpio,
+        // etc.). The plural `users:` list without a `- default` entry bypasses
+        // the distro default and produces a group-less account - see
+        // https://github.com/raspberrypi/rpi-imager/issues/1601.
+        push(QStringLiteral("user:"), cloud);
+        push(QStringLiteral("  name: ") + effectiveUser, cloud);
         push(QStringLiteral("  shell: /bin/bash"), cloud);
         
         if (!userPass.isEmpty()) {
