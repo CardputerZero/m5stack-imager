@@ -125,11 +125,6 @@ Filename: "{sys}\pnputil.exe"; Parameters: "/add-driver ""{app}\rpiboot-winusb.i
 
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent runascurrentuser
 
-[UninstallDelete]
-; Clean up user cache files (current user only)
-; Cache location: QStandardPaths::CacheLocation = {localappdata}\Raspberry Pi Imager\cache
-Type: filesandordirs; Name: "{localappdata}\Raspberry Pi Imager"
-
 [InstallDelete]
 ; 64-bit Windows – old NSIS path lives in Program Files (x86)
 Type: filesandordirs; Name: "{commonpf32}\Raspberry Pi Imager\qml"; Check: IsWin64
@@ -529,24 +524,47 @@ begin
     Log('WinUSB driver uninstall: rpiboot-winusb.inf not found in driver store');
 end;
 
-// Clean up user settings from registry during uninstall
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
+var
+  CacheFile, CacheDir: string;
 begin
   if CurUninstallStep = usUninstall then begin
     UninstallWinUSBDriver();
   end;
 
   if CurUninstallStep = usPostUninstall then begin
-    // Remove QSettings registry key for current user
-    // QSettings path: HKCU\Software\<Organization>\<AppName>
-    // Organization: "Raspberry Pi", AppName: "Raspberry Pi Imager"
-    if RegKeyExists(HKCU, 'Software\Raspberry Pi\Raspberry Pi Imager') then begin
-      Log('Removing user settings from registry');
-      RegDeleteKeyIncludingSubkeys(HKCU, 'Software\Raspberry Pi\Raspberry Pi Imager');
+    // Delete the cached OS download (potentially several GB). Path is read
+    // from QSettings at HKCU\Software\Raspberry Pi\Raspberry Pi Imager\caching\lastFileName.
+    // The basename check guards against a tampered HKCU value being used to
+    // point this admin-elevated uninstaller at an unrelated file.
+    if RegQueryStringValue(HKCU, 'Software\Raspberry Pi\Raspberry Pi Imager\caching',
+                           'lastFileName', CacheFile) then
+    begin
+      if (CacheFile <> '') and
+         (CompareText(ExtractFileName(CacheFile), 'lastdownload.cache') = 0) and
+         FileExists(CacheFile) then
+      begin
+        Log('Removing cached OS download: ' + CacheFile);
+        DeleteFile(CacheFile);
+
+        CacheDir := ExtractFileDir(CacheFile);
+        if (CacheDir <> '') and DirExists(CacheDir) then
+          RemoveDir(CacheDir); // no-op unless empty
+      end;
     end;
-    
-    // Clean up parent key if empty
-    RegDeleteKeyIfEmpty(HKCU, 'Software\Raspberry Pi');
+
+    // Delete the saved image-customisation presets. These persist Wi-Fi PSK
+    // (PBKDF2 hash, usable as the live wpa_supplicant credential), the Linux
+    // user account password hash, and SSH keys; leaving them in HKCU after
+    // uninstall is a privacy issue.
+    if RegKeyExists(HKCU, 'Software\Raspberry Pi\Raspberry Pi Imager\imagecustomization') then begin
+      Log('Removing saved image customisation settings (Wi-Fi/user/SSH credentials)');
+      RegDeleteKeyIncludingSubkeys(HKCU, 'Software\Raspberry Pi\Raspberry Pi Imager\imagecustomization');
+    end;
+
+    // Other per-user QSettings (window position, language, telemetry choice,
+    // lastpath, etc.) are intentionally preserved so reinstalling restores
+    // user preferences.
   end;
 end;
 
