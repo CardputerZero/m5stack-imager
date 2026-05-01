@@ -90,6 +90,7 @@ void DriveListModel::processDriveList(std::vector<Drivelist::DeviceDescriptor> l
     }
     
     QSet<QString> drivesInNewList;
+    QSet<QString> rpibootInThisPoll;  // separate tracking for naked rpiboot devices
 
     // First pass: collect all valid drives from the new list
     // We need to do this before modifications to correctly calculate row indices
@@ -127,8 +128,35 @@ void DriveListModel::processDriveList(std::vector<Drivelist::DeviceDescriptor> l
         bool isRpibootDevice = i.isRpiboot;
         bool isFastbootStorage = i.isFastbootStorage;
 
-        // Skip zero-sized devices (but not rpiboot/fastboot devices)
-        if (i.size == 0 && !isRpibootDevice && !isFastbootStorage)
+        // Naked rpiboot devices aren't user-selectable storage — they're just
+        // a device-state we react to by triggering auto-bootstrap.  Track
+        // them in a separate set so we still:
+        //   - emit rpibootDeviceDetected exactly once per new device
+        //   - keep them out of _drivelist (and therefore out of the QML
+        //     storage selection list, where a "Compute Module 5 / SD" entry
+        //     with no actual block device is just confusing UX)
+        // We continue past this entry without touching drivesInNewList /
+        // drivesToAdd / _drivelist.
+        if (isRpibootDevice) {
+            QString devUri = QString::fromStdString(i.device);
+            rpibootInThisPoll.insert(devUri);
+            if (!_seenRpibootDevices.contains(devUri)) {
+                QList<uint8_t> portPath(i.usbPortPath.begin(), i.usbPortPath.end());
+                uint8_t bus = 0, addr = 0;
+                QString devPath = devUri.startsWith("rpiboot://") ? devUri.mid(10) : devUri;
+                QStringList uriParts = devPath.split(':');
+                if (uriParts.size() >= 2) {
+                    bus  = static_cast<uint8_t>(uriParts[0].toUInt());
+                    addr = static_cast<uint8_t>(uriParts[1].toUInt());
+                }
+                emit rpibootDeviceDetected(devUri, bus, addr, portPath, i.rpibootPid);
+            }
+            continue;
+        }
+
+        // Skip zero-sized devices (but not fastboot devices, which can be
+        // valid storage targets even when their reported size is 0)
+        if (i.size == 0 && !isFastbootStorage)
             continue;
 
         // Filter virtual devices (loop devices, APFS volumes, VHDs, Storage Spaces).
@@ -185,23 +213,12 @@ void DriveListModel::processDriveList(std::vector<Drivelist::DeviceDescriptor> l
             info.fastbootBlockDevice = QString::fromStdString(i.fastbootBlockDevice);
             info.fastbootStorageType = QString::fromStdString(i.fastbootStorageType);
             drivesToAdd.append(info);
-
-            // When a new rpiboot device appears, emit signal for auto-bootstrap
-            if (isRpibootDevice) {
-                QList<uint8_t> portPath(i.usbPortPath.begin(), i.usbPortPath.end());
-                // Parse bus:addr from the synthetic device URI (rpiboot://bus:addr:portpath:pid)
-                QString devUri = QString::fromStdString(i.device);
-                uint8_t bus = 0, addr = 0;
-                QString devPath = devUri.startsWith("rpiboot://") ? devUri.mid(10) : devUri;
-                QStringList uriParts = devPath.split(':');
-                if (uriParts.size() >= 2) {
-                    bus = static_cast<uint8_t>(uriParts[0].toUInt());
-                    addr = static_cast<uint8_t>(uriParts[1].toUInt());
-                }
-                emit rpibootDeviceDetected(devUri, bus, addr, portPath, i.rpibootPid);
-            }
         }
     }
+
+    // Update the rpiboot tracking set so disappeared devices can re-fire
+    // rpibootDeviceDetected if they reconnect later (e.g. user reseats USB).
+    _seenRpibootDevices = rpibootInThisPoll;
 
     // Remove drives that are no longer present (iterate in reverse to maintain valid indices)
     QStringList drivesInOldList = _drivelist.keys();

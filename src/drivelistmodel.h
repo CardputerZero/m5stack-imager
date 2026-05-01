@@ -9,6 +9,7 @@
 #include <QAbstractItemModel>
 #include <QMap>
 #include <QHash>
+#include <QSet>
 #ifndef CLI_ONLY_BUILD
 #include <QQmlEngine>
 #endif
@@ -121,6 +122,12 @@ protected:
     DriveListModelPollThread _thread;
     QString _lastError;  // Last enumeration error message (empty if successful)
     QStringList _connectedRpibootChips;
+    // Tracks naked rpiboot devices we've already emitted rpibootDeviceDetected
+    // for.  We deliberately keep these out of _drivelist (they aren't writable
+    // storage until bootstrap converts them to fastboot mode) but still need
+    // a per-device "have we seen this one already" signal to avoid spamming
+    // auto-bootstrap on every poll.
+    QSet<QString> _seenRpibootDevices;
 };
 
 #endif // DRIVELISTMODEL_H
