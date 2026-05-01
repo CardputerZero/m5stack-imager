@@ -265,6 +265,7 @@ set(SOURCES ${SOURCES}
     "rpiboot/firmware_manager.cpp"
     "rpiboot/rpiboot_scanner.cpp"
     "rpiboot/secure_boot_provisioner.cpp"
+    "rpiboot/bootloader_image.cpp"
     "rpibootthread.cpp"
     "fastboot/fastboot_protocol.cpp"
     "fastboot/bmap.cpp"
