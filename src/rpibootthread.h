@@ -35,6 +35,7 @@ public:
 
     void cancel();
     void setCustomFastbootGadget(const QString &path) { _customFastbootGadget = path; }
+    void setSignFastbootGadgetKey(const QString &keyPath) { _signFastbootGadgetKey = keyPath; }
 
 signals:
     void success();
@@ -58,6 +59,7 @@ private:
     std::atomic<bool> _cancelled{false};
     std::atomic<bool> _fastbootFound{false};
     QString _customFastbootGadget;
+    QString _signFastbootGadgetKey;
 };
 
 #endif // RPIBOOTTHREAD_H

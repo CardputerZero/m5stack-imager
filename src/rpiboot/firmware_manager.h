@@ -46,6 +46,13 @@ public:
     void setCustomFastbootGadget(const std::string& path) { _customFastbootGadget = path; }
     const std::string& customFastbootGadget() const { return _customFastbootGadget; }
 
+    // When non-empty, sign the fastboot gadget (boot.img) with this RSA-2048
+    // private key (PEM) to produce fastboot/boot.sig.  Required when
+    // re-provisioning a CM5 whose secure-boot OTP is fused — the bootloader
+    // refuses to load an unsigned gadget.
+    void setSignFastbootGadgetKey(const std::string& keyPath) { _signFastbootGadgetKey = keyPath; }
+    const std::string& signFastbootGadgetKey() const { return _signFastbootGadgetKey; }
+
     // Clear all cached firmware
     void clearCache();
 
@@ -89,6 +96,7 @@ private:
 
     std::string _lastError;
     std::string _customFastbootGadget;
+    std::string _signFastbootGadgetKey;
 };
 
 } // namespace rpiboot

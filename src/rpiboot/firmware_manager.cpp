@@ -6,11 +6,15 @@
 #include "firmware_manager.h"
 #include "bootcode_loader.h"
 #include "bootfiles.h"
+#include "secure_boot_provisioner.h"
 
 #include "../curlnetworkconfig.h"
+#include "../secureboot.h"
 
 #include <QDebug>
+#include <QFile>
 #include <QStandardPaths>
+#include <QString>
 
 #include <curl/curl.h>
 
@@ -133,6 +137,25 @@ std::filesystem::path FirmwareManager::ensureAvailable(SideloadMode mode,
             break;
         }
     }
+    // When fastboot-gadget signing is requested, also require boot.sig to be
+    // present in the cache (otherwise we need to re-run the post-download
+    // signing step below).
+    const bool needsGadgetSigning =
+        (mode == SideloadMode::Fastboot && !_signFastbootGadgetKey.empty());
+    if (needsGadgetSigning && allExist) {
+        if (!std::filesystem::exists(versionDir / "fastboot" / "boot.sig"))
+            allExist = false;
+    }
+    // When re-provisioning signing is enabled (any mode), force a cache miss
+    // so that the post-download signing steps run.  We don't track which key
+    // the cached output was signed with, and re-signing is cheap (~100 ms of
+    // RSA + file copies) — much simpler and more correct than introducing
+    // sentinel marker files keyed by the user's PEM path.
+    const bool needsRecoverySigning =
+        (mode == SideloadMode::SecureBootRecovery && !_signFastbootGadgetKey.empty());
+    if (needsRecoverySigning) {
+        allExist = false;
+    }
     if (allExist && !needsBootcodeExtraction) {
         qDebug() << "FirmwareManager: cache hit for master";
         return versionDir;
@@ -195,9 +218,198 @@ std::filesystem::path FirmwareManager::ensureAvailable(SideloadMode mode,
 
     // 3c. Extract the correct bootcode from bootfiles.bin for chips that
     // need it (BCM2711 → bootcode4.bin, BCM2712 → bootcode5.bin).
+    //
+    // If a re-provisioning run on a previous invocation re-packed
+    // bootfiles.bin (with a counter-signed bootcode inside), we kept the
+    // upstream tar at bootfiles.bin.original.  Restore from .original
+    // before extracting so we always read the unsigned upstream bootcode
+    // — extracting from a signed blob and re-signing on top of that
+    // would chain-sign and the ROM would reject the result.
     if (needsBootcodeExtraction) {
+        auto bundlePath     = versionDir / "fastboot" / "bootfiles.bin";
+        auto bundleOriginal = versionDir / "fastboot" / "bootfiles.bin.original";
+        if (std::filesystem::exists(bundleOriginal)) {
+            std::error_code restoreEc;
+            std::filesystem::copy_file(bundleOriginal, bundlePath,
+                std::filesystem::copy_options::overwrite_existing, restoreEc);
+            if (restoreEc) {
+                _lastError = "Failed to restore bootfiles.bin from .original: "
+                           + restoreEc.message();
+                return {};
+            }
+        }
         if (!extractBootcodeFromBootfiles(versionDir, chip))
             return {};  // _lastError set by helper
+    }
+
+    // 3c+. Counter-sign the bootcode that's about to be uploaded to the boot
+    // ROM, when the user has enabled re-provisioning mode and we're talking
+    // to a chip whose ROM enforces customer counter-signing on the
+    // second-stage bootcode.
+    //
+    // - BCM2712 (CM5/Pi 5): the ROM verifies the uploaded bootcode against
+    //   the OTP customer key hash before executing it.  Without this step,
+    //   the ROM silently rejects the bootcode and the device never
+    //   re-enumerates → "waiting for re-enumerate" timeout.  Format:
+    //   [bootcode | u32_le len | u32_le keynum=16 | u32_le version=0 |
+    //   256-byte RSA-2048 PKCS#1v1.5 SHA-256 sig | 264-byte pubkey].
+    // - BCM2711 (CM4/Pi 4): per the secure-boot-recovery README, fused
+    //   CM4 does not require the second-stage bootcode to be counter-signed
+    //   — only the EEPROM (bootconf.sig + pubkey embedded in pieeprom.bin)
+    //   is verified.  rpi-sign-bootcode does support a -c 2711 mode (HMAC +
+    //   RSA-SHA1, with a separate HMAC key) but it's not part of the
+    //   re-provisioning flow.  Skip silently for BCM2711.
+    //
+    // Applies to both Fastboot and SecureBootRecovery on BCM2712: in both
+    // cases the bootcode lives at versionDir/bootcode5.bin (Fastboot
+    // extracts from bootfiles.bin; SecureBootRecovery downloads it directly
+    // — both targets are identical content per the upstream symlink).  The
+    // BootcodeLoader reads from this exact path.
+    if (chip == ChipGeneration::BCM2712 &&
+        !_signFastbootGadgetKey.empty() &&
+        (mode == SideloadMode::Fastboot ||
+         mode == SideloadMode::SecureBootRecovery)) {
+        auto bootcodePath = versionDir / "bootcode5.bin";
+
+        // For SecureBootRecovery the cached bootcode5.bin may already be a
+        // signed blob from a previous run.  Restore from the unsigned source
+        // (recovery.original.bin in the recovery subdir) before re-signing
+        // so we don't sign a signed blob.  Fastboot mode re-extracts on
+        // every call already, so its baseline is always clean.
+        if (mode == SideloadMode::SecureBootRecovery) {
+            auto src = versionDir / "secure-boot-recovery5" / "recovery.original.bin";
+            if (!std::filesystem::exists(src)) {
+                _lastError = "recovery.original.bin missing — cannot re-baseline bootcode5.bin";
+                return {};
+            }
+            std::error_code copyEc;
+            std::filesystem::copy_file(src, bootcodePath,
+                std::filesystem::copy_options::overwrite_existing, copyEc);
+            if (copyEc) {
+                _lastError = "Failed to refresh bootcode5.bin from recovery.original.bin: "
+                           + copyEc.message();
+                return {};
+            }
+        }
+
+        QFile bf(QString::fromStdString(bootcodePath.string()));
+        if (!bf.open(QIODevice::ReadOnly)) {
+            _lastError = "Cannot read bootcode5.bin for counter-signing";
+            return {};
+        }
+        QByteArray bootcode = bf.readAll();
+        bf.close();
+        QByteArray signedBootcode = SecureBoot::signBootcode2712(
+            bootcode, QString::fromStdString(_signFastbootGadgetKey));
+        if (signedBootcode.isEmpty()) {
+            _lastError = "Failed to counter-sign bootcode5.bin for re-provisioning";
+            return {};
+        }
+        QFile out(QString::fromStdString(bootcodePath.string()));
+        if (!out.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+            _lastError = "Cannot rewrite bootcode5.bin with counter-signed copy";
+            return {};
+        }
+        out.write(signedBootcode);
+        out.close();
+        qDebug() << "FirmwareManager: counter-signed bootcode5.bin ("
+                 << bootcode.size() << "→" << signedBootcode.size() << "bytes)";
+
+        // 3c++. ALSO splice the counter-signed bootcode into the
+        // bootfiles.bin tar we serve via the file_server.  The running
+        // bootcode (now customer-counter-signed and accepted by ROM)
+        // chain-loads the second-stage firmware out of bootfiles.bin and
+        // enforces customer signing on the embedded 2712/bootcode5.bin.
+        // Without this, the device pulls the unsigned bootcode out of the
+        // bundle and resets mid-transfer (typically observed as a partial
+        // boot.img bulk write that disconnects after a fixed buffer size).
+        // Mirrors the upstream rpi-sb-bootstrap.sh flow that re-signs
+        // bootcode5.bin inside bootfiles.bin and re-packs the tar.
+        if (mode == SideloadMode::Fastboot) {
+            auto bundlePath = versionDir / "fastboot" / "bootfiles.bin";
+            auto bundleOriginal = versionDir / "fastboot" / "bootfiles.bin.original";
+
+            // Preserve a pristine copy of the upstream tar on first encounter.
+            // This protects against re-signing-an-already-signed blob across
+            // repeated runs; we always re-baseline from .original below.
+            std::error_code preserveEc;
+            if (!std::filesystem::exists(bundleOriginal)) {
+                std::filesystem::copy_file(bundlePath, bundleOriginal, preserveEc);
+                if (preserveEc) {
+                    _lastError = "Failed to preserve bootfiles.bin.original: "
+                               + preserveEc.message();
+                    return {};
+                }
+            }
+
+            // Read the pristine tar, splice in the signed bootcode, write
+            // back to bootfiles.bin (overwriting any previous-run output).
+            Bootfiles bundle;
+            if (!bundle.extractFromFile(bundleOriginal.string())) {
+                _lastError = "Cannot read bootfiles.bin.original: " + bundle.lastError();
+                return {};
+            }
+            std::vector<uint8_t> signedBootcodeVec(
+                signedBootcode.constData(),
+                signedBootcode.constData() + signedBootcode.size());
+            // The 2712 chip's bootcode lives under "2712/bootcode5.bin"
+            // in the upstream tar.  Try both with and without the chip
+            // prefix to tolerate any future repackaging.
+            const std::string targetEntry = "2712/bootcode5.bin";
+            if (!bundle.replaceEntry(targetEntry, signedBootcodeVec)) {
+                _lastError = "Cannot replace " + targetEntry + " in bootfiles.bin: "
+                           + bundle.lastError();
+                return {};
+            }
+            if (!bundle.writeToFile(bundlePath.string())) {
+                _lastError = "Cannot write re-packed bootfiles.bin: " + bundle.lastError();
+                return {};
+            }
+            qDebug() << "FirmwareManager: re-packed fastboot/bootfiles.bin with"
+                     << "counter-signed" << targetEntry.c_str();
+        }
+    }
+
+    // 3d. If gadget signing is requested, generate fastboot/boot.sig from the
+    // boot.img that's now on disk (custom or downloaded).  Only meaningful for
+    // fastboot mode, and only for chips that ship a separate boot.img
+    // (BCM2711/BCM2712).  BCM2836_7 uses a self-contained bootfiles.bin
+    // bundle and there's no boot.img to sign.
+    if (needsGadgetSigning) {
+        auto bootImg = versionDir / "fastboot" / "boot.img";
+        if (!std::filesystem::exists(bootImg)) {
+            qDebug() << "FirmwareManager: skipping gadget signing — no boot.img for this chip";
+        } else {
+            auto bootSig = versionDir / "fastboot" / "boot.sig";
+            qDebug() << "FirmwareManager: signing fastboot gadget with key"
+                     << QString::fromStdString(_signFastbootGadgetKey);
+            if (!SecureBoot::generateBootSig(QString::fromStdString(bootImg.string()),
+                                              QString::fromStdString(_signFastbootGadgetKey),
+                                              QString::fromStdString(bootSig.string()))) {
+                _lastError = "Failed to sign fastboot gadget (boot.img). "
+                             "Check that the RSA private key is valid (PEM, RSA-2048).";
+                return {};
+            }
+        }
+    }
+
+    // 3e. If SecureBootRecovery signing is requested, prepare the signed
+    // pieeprom.bin (with embedded bootconf.txt + bootconf.sig + pubkey.bin)
+    // and counter-signed bootcode5.bin needed by an already-fused CM5/CM4.
+    if (needsRecoverySigning) {
+        const std::string sub = (chip == ChipGeneration::BCM2712)
+                                    ? "secure-boot-recovery5"
+                                    : "secure-boot-recovery";
+        auto recoveryDir = versionDir / sub;
+        std::string err;
+        const bool counterSign = (chip == ChipGeneration::BCM2712);
+        qDebug() << "FirmwareManager: preparing signed recovery firmware in"
+                 << QString::fromStdString(recoveryDir.string());
+        if (!SecureBootProvisioner::prepareSignedRecovery(
+                chip, recoveryDir, _signFastbootGadgetKey, counterSign, err)) {
+            _lastError = "Failed to prepare signed recovery firmware: " + err;
+            return {};
+        }
     }
 
     // 4. Validate cache

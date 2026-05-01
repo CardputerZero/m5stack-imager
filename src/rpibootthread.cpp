@@ -51,6 +51,8 @@ void RpibootThread::run()
     FirmwareManager fwMgr;
     if (!_customFastbootGadget.isEmpty())
         fwMgr.setCustomFastbootGadget(_customFastbootGadget.toStdString());
+    if (!_signFastbootGadgetKey.isEmpty())
+        fwMgr.setSignFastbootGadgetKey(_signFastbootGadgetKey.toStdString());
     auto fwDir = fwMgr.ensureAvailable(_mode, _device.chipGeneration,
         [this](uint64_t current, uint64_t total, const std::string& status) {
             emit preparationStatusUpdate(QString::fromStdString(status));
