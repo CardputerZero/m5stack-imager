@@ -324,3 +324,199 @@ qint64 SecureBoot::getCurrentTimestamp()
     return QDateTime::currentSecsSinceEpoch();
 }
 
+QByteArray SecureBoot::generateConfigSig(const QByteArray &configText, const QString &rsaKeyPath)
+{
+    // SHA-256 over the raw config text (matches rpi-eeprom-digest behaviour).
+    AcceleratedCryptographicHash hash(QCryptographicHash::Sha256);
+    hash.addData(configText);
+    QByteArray digest = hash.result();
+    if (digest.size() != 32) {
+        qDebug() << "SecureBoot::generateConfigSig: SHA-256 produced" << digest.size() << "bytes";
+        return {};
+    }
+
+    // RSA sign the raw 32-byte digest (rsaSign internally wraps it in DigestInfo).
+    QByteArray sigHex = rsaSign(digest, rsaKeyPath);
+    if (sigHex.isEmpty()) {
+        qDebug() << "SecureBoot::generateConfigSig: rsaSign failed";
+        return {};
+    }
+
+    QByteArray sig;
+    sig.append(digest.toHex());
+    sig.append('\n');
+    sig.append("ts: ");
+    sig.append(QByteArray::number(getCurrentTimestamp()));
+    sig.append('\n');
+    sig.append("rsa2048: ");
+    sig.append(sigHex);
+    sig.append('\n');
+    return sig;
+}
+
+// Parse one ASN.1 length field at *off, advance *off past it, return length
+// or -1 on error.  Supports short form and long-form ≤ 4 bytes (covers all
+// realistic RSA-2048 keys).
+static int asn1ParseLength(const uint8_t *d, int len, int *off)
+{
+    if (*off >= len) return -1;
+    uint8_t b = d[(*off)++];
+    if (b < 0x80) return b;
+    int n = b & 0x7f;
+    if (n == 0 || n > 4 || *off + n > len) return -1;
+    int result = 0;
+    for (int i = 0; i < n; ++i)
+        result = (result << 8) | d[(*off)++];
+    return result;
+}
+
+QByteArray SecureBoot::extractRsaPubkeyBin(const QString &rsaKeyPath)
+{
+    // Run openssl to extract a DER-encoded SubjectPublicKeyInfo for the
+    // RSA key.  `openssl pkey -pubout` works with both private and public
+    // keys, so callers can pass either.
+    QProcess proc;
+    proc.start("openssl", QStringList()
+        << "pkey" << "-in" << rsaKeyPath << "-pubout" << "-outform" << "DER");
+    if (!proc.waitForStarted(5000)) {
+        qDebug() << "SecureBoot::extractRsaPubkeyBin: failed to start openssl";
+        return {};
+    }
+    if (!proc.waitForFinished(30000) || proc.exitCode() != 0) {
+        qDebug() << "SecureBoot::extractRsaPubkeyBin: openssl failed:"
+                 << proc.readAllStandardError();
+        return {};
+    }
+    QByteArray der = proc.readAllStandardOutput();
+    if (der.isEmpty()) {
+        qDebug() << "SecureBoot::extractRsaPubkeyBin: empty DER output";
+        return {};
+    }
+
+    // SubjectPublicKeyInfo := SEQUENCE { AlgorithmIdentifier, BIT STRING }
+    // where the BIT STRING wraps an RSAPublicKey := SEQUENCE { N, E }.
+    const auto *d = reinterpret_cast<const uint8_t*>(der.constData());
+    const int dlen = der.size();
+    int i = 0;
+
+    auto fail = [](const char *why) -> QByteArray {
+        qDebug() << "SecureBoot::extractRsaPubkeyBin: DER parse:" << why;
+        return {};
+    };
+
+    if (i >= dlen || d[i++] != 0x30) return fail("expected SEQUENCE");
+    if (asn1ParseLength(d, dlen, &i) < 0) return fail("outer length");
+
+    // Skip AlgorithmIdentifier
+    if (i >= dlen || d[i++] != 0x30) return fail("expected algo SEQUENCE");
+    int algoLen = asn1ParseLength(d, dlen, &i);
+    if (algoLen < 0 || i + algoLen > dlen) return fail("algo length");
+    i += algoLen;
+
+    // BIT STRING wraps the RSAPublicKey
+    if (i >= dlen || d[i++] != 0x03) return fail("expected BIT STRING");
+    if (asn1ParseLength(d, dlen, &i) < 0) return fail("bit-string length");
+    if (i >= dlen || d[i++] != 0x00) return fail("expected 0 unused bits");
+
+    // RSAPublicKey SEQUENCE { N, E }
+    if (i >= dlen || d[i++] != 0x30) return fail("expected RSAPublicKey SEQUENCE");
+    if (asn1ParseLength(d, dlen, &i) < 0) return fail("rsa-pubkey length");
+
+    // INTEGER N
+    if (i >= dlen || d[i++] != 0x02) return fail("expected INTEGER N");
+    int nLen = asn1ParseLength(d, dlen, &i);
+    if (nLen < 0 || i + nLen > dlen) return fail("N length");
+    // Strip the leading 0x00 sign byte that ASN.1 prepends to keep N positive.
+    if (nLen > 0 && d[i] == 0x00) { ++i; --nLen; }
+    if (nLen != 256) {
+        qDebug() << "SecureBoot::extractRsaPubkeyBin: expected 2048-bit key, got"
+                 << (nLen * 8) << "bits";
+        return {};
+    }
+    QByteArray nBE(reinterpret_cast<const char*>(d + i), nLen);
+    i += nLen;
+
+    // INTEGER E
+    if (i >= dlen || d[i++] != 0x02) return fail("expected INTEGER E");
+    int eLen = asn1ParseLength(d, dlen, &i);
+    if (eLen < 0 || eLen > 8 || i + eLen > dlen) return fail("E length");
+    QByteArray eBE(reinterpret_cast<const char*>(d + i), eLen);
+
+    // The bootloader expects raw N (256 bytes, little-endian) followed by
+    // raw E (8 bytes, little-endian).  Both are big-endian in DER.
+    QByteArray result;
+    result.reserve(264);
+    for (int j = nBE.size() - 1; j >= 0; --j)
+        result.append(nBE[j]);
+    while (result.size() < 256)
+        result.append(char(0));
+
+    QByteArray eLE;
+    for (int j = eBE.size() - 1; j >= 0; --j)
+        eLE.append(eBE[j]);
+    while (eLE.size() < 8)
+        eLE.append(char(0));
+    eLE.resize(8);
+    result.append(eLE);
+
+    return result;
+}
+
+QByteArray SecureBoot::signBootcode2712(const QByteArray &bootcode,
+                                          const QString &rsaKeyPath,
+                                          int keynum, int version)
+{
+    if (bootcode.isEmpty()) {
+        qDebug() << "SecureBoot::signBootcode2712: empty bootcode";
+        return {};
+    }
+    if ((keynum < 0 || keynum > 4) && keynum != 16) {
+        qDebug() << "SecureBoot::signBootcode2712: bad keynum" << keynum;
+        return {};
+    }
+    if (version < 0 || version > 32) {
+        qDebug() << "SecureBoot::signBootcode2712: bad version" << version;
+        return {};
+    }
+
+    auto appendU32LE = [](QByteArray &out, uint32_t v) {
+        out.append(char(v & 0xff));
+        out.append(char((v >> 8) & 0xff));
+        out.append(char((v >> 16) & 0xff));
+        out.append(char((v >> 24) & 0xff));
+    };
+
+    QByteArray result;
+    result.reserve(bootcode.size() + 4 + 4 + 4 + 256 + 264);
+    result.append(bootcode);
+    appendU32LE(result, uint32_t(bootcode.size()));
+    appendU32LE(result, uint32_t(keynum));
+    appendU32LE(result, uint32_t(version));
+
+    // SHA-256 over [bootcode | length | keynum | version], then RSA-sign.
+    AcceleratedCryptographicHash hash(QCryptographicHash::Sha256);
+    hash.addData(result);
+    QByteArray digest = hash.result();
+    if (digest.size() != 32) {
+        qDebug() << "SecureBoot::signBootcode2712: bad digest size" << digest.size();
+        return {};
+    }
+
+    QByteArray sigHex = rsaSign(digest, rsaKeyPath);
+    QByteArray sig = QByteArray::fromHex(sigHex);
+    if (sig.size() != 256) {
+        qDebug() << "SecureBoot::signBootcode2712: bad signature size" << sig.size();
+        return {};
+    }
+    result.append(sig);
+
+    QByteArray pubkey = extractRsaPubkeyBin(rsaKeyPath);
+    if (pubkey.size() != 264) {
+        qDebug() << "SecureBoot::signBootcode2712: bad pubkey.bin size" << pubkey.size();
+        return {};
+    }
+    result.append(pubkey);
+
+    return result;
+}
+
