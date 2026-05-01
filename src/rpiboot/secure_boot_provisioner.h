@@ -35,18 +35,28 @@ public:
     static std::optional<std::array<uint8_t, 32>> calculateOtpKeyHash(
         const std::filesystem::path& publicKeyPath);
 
-    // Prepare a secure-boot-recovery firmware directory:
-    //   - Copy base recovery firmware
-    //   - Sign EEPROM with the provided private key
-    //   - Set boot.conf with program_pubkey=1, SIGNED_BOOT=1
-    //
-    // The outputDir will contain everything needed for RpibootProtocol
-    // to sideload in SecureBootRecovery mode.
-    bool prepareRecoveryFirmware(ChipGeneration gen,
-                                  const std::filesystem::path& baseFirmwareDir,
-                                  const std::filesystem::path& privateKeyPath,
-                                  const std::filesystem::path& outputDir,
-                                  bool lockJtag = false);
+    // Prepare a secure-boot-recovery firmware directory for re-provisioning
+    // an already-fused CM5 (or CM4).  Operates in-place in `recoveryDir`,
+    // which must already contain `pieeprom.original.bin` and (for BCM2712)
+    // `recovery.original.bin`.  Produces:
+    //   - `pieeprom.bin`     — pieeprom.original.bin with bootconf.txt
+    //                          replaced (SIGNED_BOOT=1, ENABLE_SELF_UPDATE=0
+    //                          plus chip-default options), bootconf.sig
+    //                          embedded, customer pubkey embedded, and (when
+    //                          counterSignFirmware) a customer-counter-signed
+    //                          bootcode.
+    //   - `pieeprom.sig`     — sha256+ts (no rsa2048; RSA proof is embedded
+    //                          as bootconf.sig inside pieeprom.bin).
+    //   - `bootcode5.bin`    — counter-signed recovery.original.bin (BCM2712
+    //                          only; produced when counterSignFirmware).
+    // counterSignFirmware should be true when the device already has
+    // secure-boot fused; on a fresh board, ROM verifies recovery against
+    // a key hash of zero and a counter-signed bootcode will not boot.
+    static bool prepareSignedRecovery(ChipGeneration gen,
+                                       const std::filesystem::path& recoveryDir,
+                                       const std::filesystem::path& privateKeyPath,
+                                       bool counterSignFirmware,
+                                       std::string& errOut);
 
     // Execute OTP provisioning via the rpiboot protocol.
     // This sideloads the recovery firmware which programs the key hash.

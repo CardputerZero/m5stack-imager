@@ -5,6 +5,7 @@
 
 #include "secure_boot_provisioner.h"
 #include "rpiboot_protocol.h"
+#include "bootloader_image.h"
 #include "../secureboot.h"
 #include "../acceleratedcryptographichash.h"
 
@@ -113,182 +114,169 @@ std::optional<std::array<uint8_t, 32>> SecureBootProvisioner::calculateOtpKeyHas
     return result;
 }
 
-// The Pi EEPROM image has a fixed structure: a 4KB config block starting at
-// a known offset, followed by the firmware code.  The config section is
-// padded with 0xFF.  The last 4KB block contains the SHA-256 digest.
-//
-// boot.conf is stored as ASCII text inside the EEPROM config block.
-// rpi-eeprom-config writes config at the EEPROM's config offset and pads
-// the remainder of the 4KB block with 0xFF.
-//
-// For secure boot recovery, we need to:
-// 1. Read the base EEPROM image (pieeprom.original.bin)
-// 2. Prepare a boot.conf with the required settings
-// 3. Embed boot.conf into the EEPROM image
-// 4. Sign the image and produce pieeprom.sig
-
-static constexpr size_t EEPROM_CONFIG_SIZE = 4096;
-
-// Find the config section in a pieeprom image.
-// The config section is identified by being a 4KB block of mostly ASCII text.
-// For CM4 (BCM2711), the config typically starts at offset 0 of the second
-// 4KB block.  Rather than hardcoding, we look for the "[all]" section marker
-// or known config keys.
-static std::pair<size_t, size_t> findConfigSection(const QByteArray& eeprom)
+// Default bootconf.txt for re-provisioning.  Mirrors
+// usbboot/secure-boot-recovery5/boot.conf with SIGNED_BOOT=1 added so the
+// bootloader will load only signed boot.img on subsequent boots.
+static QByteArray defaultBootConf2712()
 {
-    // The config is in the first 4KB-aligned block that contains "[all]"
-    // or common EEPROM config keys.  Fall back to a known default offset.
-    for (size_t off = 0; off + EEPROM_CONFIG_SIZE <= static_cast<size_t>(eeprom.size());
-         off += EEPROM_CONFIG_SIZE) {
-        QByteArray block = eeprom.mid(static_cast<qsizetype>(off),
-                                       static_cast<qsizetype>(EEPROM_CONFIG_SIZE));
-        if (block.contains("[all]") || block.contains("BOOT_UART") ||
-            block.contains("SIGNED_BOOT")) {
-            return {off, EEPROM_CONFIG_SIZE};
-        }
-    }
-    // Default: second 4KB block (offset 4096) for BCM2711
-    return {4096, EEPROM_CONFIG_SIZE};
+    QByteArray b;
+    b.append("[all]\n");
+    b.append("BOOT_UART=1\n");
+    b.append("POWER_OFF_ON_HALT=1\n");
+    b.append("BOOT_ORDER=0xf2461\n");
+    b.append("SIGNED_BOOT=1\n");
+    b.append("ENABLE_SELF_UPDATE=0\n");
+    return b;
 }
 
-bool SecureBootProvisioner::prepareRecoveryFirmware(ChipGeneration gen,
-                                                      const std::filesystem::path& baseFirmwareDir,
-                                                      const std::filesystem::path& privateKeyPath,
-                                                      const std::filesystem::path& outputDir,
-                                                      bool lockJtag)
+static QByteArray defaultBootConf2711()
 {
-    // Select the correct recovery directory
-    std::string recoverySubdir = (gen == ChipGeneration::BCM2712)
-        ? "secure-boot-recovery5" : "secure-boot-recovery";
+    QByteArray b;
+    b.append("[all]\n");
+    b.append("BOOT_UART=1\n");
+    b.append("WAKE_ON_GPIO=1\n");
+    b.append("POWER_OFF_ON_HALT=0\n");
+    b.append("HDMI_DELAY=0\n");
+    b.append("SIGNED_BOOT=1\n");
+    b.append("ENABLE_SELF_UPDATE=0\n");
+    return b;
+}
 
-    auto srcDir = baseFirmwareDir / recoverySubdir;
-    if (!std::filesystem::exists(srcDir)) {
-        _lastError = "Recovery firmware not found: " + srcDir.string();
-        return false;
-    }
-
-    // Create output directory
-    std::error_code ec;
-    std::filesystem::create_directories(outputDir, ec);
-    if (ec) {
-        _lastError = "Cannot create output directory: " + ec.message();
-        return false;
-    }
-
-    // Copy base recovery firmware
-    std::filesystem::copy(srcDir, outputDir,
-                           std::filesystem::copy_options::recursive |
-                           std::filesystem::copy_options::overwrite_existing, ec);
-    if (ec) {
-        _lastError = "Failed to copy recovery firmware: " + ec.message();
-        return false;
-    }
-
-    // 1. Read the base EEPROM image
-    auto eepromOrigPath = outputDir / "pieeprom.original.bin";
-    auto eepromOutPath = outputDir / "pieeprom.bin";
-    auto eepromSigPath = outputDir / "pieeprom.sig";
-
-    // Fall back to pieeprom.bin if .original.bin doesn't exist
-    if (!std::filesystem::exists(eepromOrigPath)) {
-        eepromOrigPath = outputDir / "pieeprom.bin";
-    }
-
-    QFile eepromFile(QString::fromStdString(eepromOrigPath.string()));
-    if (!eepromFile.open(QIODevice::ReadOnly)) {
-        _lastError = "Cannot read EEPROM image: " + eepromOrigPath.string();
-        return false;
-    }
-    QByteArray eepromData = eepromFile.readAll();
-    eepromFile.close();
-
-    if (eepromData.isEmpty()) {
-        _lastError = "EEPROM image is empty: " + eepromOrigPath.string();
-        return false;
-    }
-
-    // 2. Build the boot.conf content
-    QByteArray bootConf;
-    bootConf.append("[all]\n");
-    bootConf.append("SIGNED_BOOT=1\n");
-    bootConf.append("program_pubkey=1\n");
-    if (lockJtag) {
-        bootConf.append("program_jtag_lock=1\n");
-    }
-
-    // 3. Embed boot.conf into the EEPROM image
-    auto [configOffset, configSize] = findConfigSection(eepromData);
-
-    if (static_cast<size_t>(bootConf.size()) > configSize) {
-        _lastError = "boot.conf too large for EEPROM config section";
-        return false;
-    }
-
-    // Clear the config section and write new config
-    std::memset(eepromData.data() + configOffset, 0xFF, configSize);
-    std::memcpy(eepromData.data() + configOffset, bootConf.constData(),
-                static_cast<size_t>(bootConf.size()));
-
-    // 4. Write the modified EEPROM image
-    QFile eepromOut(QString::fromStdString(eepromOutPath.string()));
-    if (!eepromOut.open(QIODevice::WriteOnly)) {
-        _lastError = "Cannot write EEPROM image: " + eepromOutPath.string();
-        return false;
-    }
-    eepromOut.write(eepromData);
-    eepromOut.close();
-
-    // 5. Sign the EEPROM image — produce pieeprom.sig
-    //    SHA-256 hash of the EEPROM binary, then RSA sign the hash
-    QString eepromOutQStr = QString::fromStdString(eepromOutPath.string());
-    QString keyQStr = QString::fromStdString(privateKeyPath.string());
-    QString sigQStr = QString::fromStdString(eepromSigPath.string());
-
-    QByteArray hashHex = SecureBoot::sha256File(eepromOutQStr);
+// Generate the pieeprom.sig file alongside a signed pieeprom.bin.  Format
+// matches rpi-eeprom-digest run *without* -k: just sha256 + ts.  The RSA
+// proof for the bootloader lives inside pieeprom.bin as bootconf.sig.
+static bool writePieepromSig(const std::filesystem::path& bootImgPath,
+                              const std::filesystem::path& sigPath,
+                              std::string& errOut)
+{
+    QString imgQStr = QString::fromStdString(bootImgPath.string());
+    QByteArray hashHex = SecureBoot::sha256File(imgQStr);
     if (hashHex.isEmpty()) {
-        _lastError = "Failed to hash EEPROM image";
+        errOut = "Failed to hash signed pieeprom.bin";
+        return false;
+    }
+    QFile f(QString::fromStdString(sigPath.string()));
+    if (!f.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text)) {
+        errOut = "Cannot write " + sigPath.string();
+        return false;
+    }
+    f.write(hashHex);
+    f.write("\n");
+    f.write("ts: ");
+    f.write(QByteArray::number(SecureBoot::getCurrentTimestamp()));
+    f.write("\n");
+    f.close();
+    return true;
+}
+
+bool SecureBootProvisioner::prepareSignedRecovery(ChipGeneration gen,
+                                                    const std::filesystem::path& recoveryDir,
+                                                    const std::filesystem::path& privateKeyPath,
+                                                    bool counterSignFirmware,
+                                                    std::string& errOut)
+{
+    if (!std::filesystem::exists(recoveryDir)) {
+        errOut = "Recovery firmware directory not found: " + recoveryDir.string();
+        return false;
+    }
+    if (!std::filesystem::exists(privateKeyPath)) {
+        errOut = "Private key not found: " + privateKeyPath.string();
+        return false;
+    }
+    if (gen != ChipGeneration::BCM2711 && gen != ChipGeneration::BCM2712) {
+        errOut = "Secure-boot signing is only supported for BCM2711/BCM2712";
         return false;
     }
 
-    QByteArray hashBytes = QByteArray::fromHex(hashHex);
-    QByteArray signature = SecureBoot::rsaSign(hashBytes, keyQStr);
-    if (signature.isEmpty()) {
-        _lastError = "Failed to sign EEPROM image";
+    const auto pieepromOriginal = recoveryDir / "pieeprom.original.bin";
+    const auto pieepromOut      = recoveryDir / "pieeprom.bin";
+    const auto pieepromSig      = recoveryDir / "pieeprom.sig";
+    if (!std::filesystem::exists(pieepromOriginal)) {
+        errOut = "pieeprom.original.bin not found in " + recoveryDir.string();
         return false;
     }
 
-    // Write signature file in the same format as rpi-eeprom-digest
-    QFile sigFile(sigQStr);
-    if (!sigFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
-        _lastError = "Cannot create EEPROM signature file: " + eepromSigPath.string();
+    QString keyQStr = QString::fromStdString(privateKeyPath.string());
+
+    // 1. Load pieeprom.original.bin into the TLV editor.
+    BootloaderImage img;
+    if (!img.load(QString::fromStdString(pieepromOriginal.string()))) {
+        errOut = "Failed to parse pieeprom.original.bin: " + img.lastError().toStdString();
         return false;
     }
-    sigFile.write(hashHex);
-    sigFile.write("\n");
-    sigFile.write("ts: ");
-    sigFile.write(QByteArray::number(SecureBoot::getCurrentTimestamp()));
-    sigFile.write("\n");
-    sigFile.write("rsa2048: ");
-    sigFile.write(signature);
-    sigFile.write("\n");
-    sigFile.close();
 
-    // 6. Copy the public key into the recovery directory (the bootloader needs it)
-    auto pubKeyDest = outputDir / "pubkey.pem";
-    // Extract public key from private key
-    {
-        QProcess proc;
-        proc.start("openssl", {"rsa", "-in", QString::fromStdString(privateKeyPath.string()),
-                                "-outform", "PEM", "-pubout", "-out",
-                                QString::fromStdString(pubKeyDest.string())});
-        if (!proc.waitForStarted(5000) || !proc.waitForFinished(30000) || proc.exitCode() != 0) {
-            qDebug() << "SecureBootProvisioner: warning: could not extract public key to recovery dir";
-            // Non-fatal — some recovery firmware versions don't require it in-tree
+    // 2. Build bootconf.txt and its RSA signature blob.
+    const QByteArray bootConf = (gen == ChipGeneration::BCM2712)
+        ? defaultBootConf2712() : defaultBootConf2711();
+    const QByteArray bootConfSig = SecureBoot::generateConfigSig(bootConf, keyQStr);
+    if (bootConfSig.isEmpty()) {
+        errOut = "Failed to sign bootconf.txt with " + privateKeyPath.string();
+        return false;
+    }
+
+    // 3. Extract the bootloader's public key in the 264-byte format the
+    //    EEPROM consumes (256-byte N || 8-byte E, both little-endian).
+    const QByteArray pubkeyBin = SecureBoot::extractRsaPubkeyBin(keyQStr);
+    if (pubkeyBin.size() != 264) {
+        errOut = "Failed to extract RSA pubkey from " + privateKeyPath.string();
+        return false;
+    }
+
+    // 4. (Optional) Counter-sign the bootcode embedded in pieeprom for
+    //    chips with secure-boot already fused.  On the BCM2712 the boot
+    //    ROM additionally verifies the second-stage bootcode against the
+    //    customer key once the OTP hash is non-zero.
+    if (counterSignFirmware && gen == ChipGeneration::BCM2712) {
+        QByteArray bootcode = img.getFile(QStringLiteral("bootcode.bin"));
+        if (bootcode.isEmpty()) {
+            errOut = "Failed to extract bootcode.bin from pieeprom.original.bin";
+            return false;
+        }
+        QByteArray signedBootcode = SecureBoot::signBootcode2712(bootcode, keyQStr);
+        if (signedBootcode.isEmpty()) {
+            errOut = "Failed to counter-sign bootcode.bin";
+            return false;
+        }
+        if (!img.updateBootcode(signedBootcode)) {
+            errOut = "Failed to embed signed bootcode in pieeprom.bin: "
+                   + img.lastError().toStdString();
+            return false;
         }
     }
 
-    qDebug() << "SecureBootProvisioner: recovery firmware prepared in"
-             << QString::fromStdString(outputDir.string());
+    // 5. Splice bootconf.txt, bootconf.sig and pubkey.bin into the EEPROM.
+    if (!img.updateFile(QStringLiteral("bootconf.txt"), bootConf)) {
+        errOut = "Failed to update bootconf.txt: " + img.lastError().toStdString();
+        return false;
+    }
+    if (!img.updateFile(QStringLiteral("bootconf.sig"), bootConfSig)) {
+        errOut = "Failed to update bootconf.sig: " + img.lastError().toStdString();
+        return false;
+    }
+    if (!img.updateFile(QStringLiteral("pubkey.bin"), pubkeyBin)) {
+        errOut = "Failed to update pubkey.bin: " + img.lastError().toStdString();
+        return false;
+    }
+
+    if (!img.save(QString::fromStdString(pieepromOut.string()))) {
+        errOut = "Failed to write " + pieepromOut.string();
+        return false;
+    }
+
+    // 6. Generate pieeprom.sig (SHA-256 + timestamp; no rsa2048 line — the
+    //    RSA proof lives inside pieeprom.bin as bootconf.sig).
+    if (!writePieepromSig(pieepromOut, pieepromSig, errOut))
+        return false;
+
+    // Note: counter-signing the second-stage bootcode that gets uploaded to
+    // the ROM (versionDir/bootcode5.bin) is handled by FirmwareManager — it
+    // owns the top-level cache directory that BootcodeLoader reads from,
+    // and the same logic applies for both Fastboot and SecureBootRecovery
+    // modes on BCM2712.  BCM2711 doesn't require that step.
+
+    qDebug() << "SecureBootProvisioner: signed pieeprom.bin written to"
+             << QString::fromStdString(pieepromOut.string())
+             << "(counter-sign firmware:" << counterSignFirmware << ")";
     return true;
 }
 
