@@ -167,7 +167,7 @@ WizardStepBase {
                 color: "transparent"
                 border.color: Style.titleSeparatorColor
                 border.width: 1
-                radius: Style.borderRadius
+                radius: Style.sectionBorderRadius
                 visible: typeof imageWriter.isRpibootDevice === "function" && imageWriter.isRpibootDevice()
 
                 ColumnLayout {
@@ -181,7 +181,7 @@ WizardStepBase {
                         font.family: Style.fontFamily
                         font.pointSize: Style.fontSizeSubtitle
                         font.bold: true
-                        color: Style.textTitleColor
+                        color: Style.formLabelColor
                     }
 
                     Text {
