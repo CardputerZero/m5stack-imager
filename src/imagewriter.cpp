@@ -32,6 +32,8 @@
 #include <archive.h>
 #include <archive_entry.h>
 #include <lzma.h>
+#define ZSTD_STATIC_LINKING_ONLY  // for ZSTD_FRAMEHEADERSIZE_MAX
+#include <zstd.h>
 #include <qjsondocument.h>
 #include <QJsonArray>
 #include <random>
@@ -556,6 +558,8 @@ void ImageWriter::setSrc(const QUrl &url, quint64 downloadLen, quint64 extrLen, 
             _parseXZFile();
         else if (lowercaseurl.endsWith(".gz"))
             _parseGzFile();
+        else if (lowercaseurl.endsWith(".zst"))
+            _parseZstdFile();
         else
             _parseCompressedFile();
     }
@@ -2869,6 +2873,73 @@ void ImageWriter::_parseGzFile()
     {
         qDebug() << "Unable to open .gz file for parsing";
     }
+}
+
+void ImageWriter::_parseZstdFile()
+{
+    QFile f(_src.toLocalFile());
+    _extrLen = 0;
+
+    if (!f.open(QIODevice::ReadOnly))
+    {
+        qDebug() << "Unable to open .zst file for parsing";
+        return;
+    }
+
+    // Two-stage: read just enough bytes to query the actual frame header size,
+    // then read the remainder. ZSTD_FRAMEHEADERSIZE_PREFIX is the minimum input
+    // size required to call ZSTD_frameHeaderSize().
+    constexpr qint64 prefixSize = ZSTD_FRAMEHEADERSIZE_PREFIX(ZSTD_f_zstd1);
+    QByteArray header = f.read(prefixSize);
+    if (header.size() < prefixSize)
+    {
+        qDebug() << "Unable to read .zst frame prefix";
+        f.close();
+        return;
+    }
+
+    size_t hdrSize = ZSTD_frameHeaderSize(header.constData(), header.size());
+    if (ZSTD_isError(hdrSize))
+    {
+        qDebug() << "Invalid .zst frame header:" << ZSTD_getErrorName(hdrSize);
+        f.close();
+        return;
+    }
+
+    if (static_cast<qint64>(hdrSize) > prefixSize)
+    {
+        header.append(f.read(static_cast<qint64>(hdrSize) - prefixSize));
+    }
+    f.close();
+
+    if (static_cast<size_t>(header.size()) < hdrSize)
+    {
+        qDebug() << "Truncated .zst frame header";
+        return;
+    }
+
+    unsigned long long fcs = ZSTD_getFrameContentSize(header.constData(),
+                                                     static_cast<size_t>(header.size()));
+
+    if (fcs == ZSTD_CONTENTSIZE_ERROR)
+    {
+        qDebug() << "Unable to parse .zst frame header";
+        return;
+    }
+    if (fcs == ZSTD_CONTENTSIZE_UNKNOWN)
+    {
+        // First-frame Frame_Content_Size is absent; can't determine without
+        // decompressing. Leave _extrLen=0 and progress will fall back to the
+        // download size (the existing behaviour, with progress > 100%).
+        qDebug() << "Parsed .zst file. Uncompressed size: unknown (FCS not present)";
+        return;
+    }
+
+    // Note: this is the size of the FIRST zstd frame only. Multi-frame .zst
+    // files would understate the total decompressed size. Single-frame is
+    // the standard case for OS images.
+    _extrLen = fcs;
+    qDebug() << "Parsed .zst file. Uncompressed size:" << _extrLen;
 }
 
 bool ImageWriter::isOnline()
