@@ -15,8 +15,9 @@ import RpiImager
 BaseDialog {
     id: popup
     
-    // Override default height for this more complex dialog
-    height: Math.max(280, contentLayout ? (contentLayout.implicitHeight + Style.cardPadding * 2) : 280)
+    // Cap the dialog height so the options column scrolls when items don't
+    // fit (e.g. on small windows or once Secure Boot key is exposed).
+    height: parent ? Math.min(560, parent.height - Style.cardPadding * 2) : 560
     
     // imageWriter is inherited from BaseDialog
     // Optional reference to the wizard container for ephemeral flags
@@ -51,17 +52,19 @@ BaseDialog {
             }
             return []
         }, 0)
-        registerFocusGroup("options", function(){ 
-            var items = [chkBeep.focusItem, chkEject.focusItem, chkTelemetry.focusItem]
-            // Include telemetry help link if visible
-            if (chkTelemetry.helpLinkItem && chkTelemetry.helpLinkItem.visible)
-                items.push(chkTelemetry.helpLinkItem)
-            items.push(chkDisableWarnings.focusItem, editRepoButton.focusItem)
+        registerFocusGroup("options", function(){
+            var items = [chkBeep.focusItem, chkEject.focusItem,
+                         chkDisableWarnings.focusItem, editRepoButton.focusItem]
             // Only include secure boot key button if visible
             if (secureBootKeyButton.visible)
                 items.push(secureBootKeyButton.focusItem)
             items.push(chkConnectOrg.focusItem)
             items.push(clearSettingsButton.focusItem)
+            // Telemetry pill (and its help link) sit at the bottom — see the
+            // pill's own placement comment below.
+            items.push(chkTelemetry.focusItem)
+            if (chkTelemetry.helpLinkItem && chkTelemetry.helpLinkItem.visible)
+                items.push(chkTelemetry.helpLinkItem)
             return items
         }, 1)
         registerFocusGroup("buttons", function(){ 
@@ -86,15 +89,22 @@ BaseDialog {
         activeFocusOnTab: popup.imageWriter ? popup.imageWriter.isScreenReaderActive() : false
     }
 
-    // Options section
-    Item {
+    // Options section — scrollable so we don't hide items when the option
+    // list outgrows the dialog (e.g. when Secure Boot RSA Key is shown).
+    ScrollView {
+        id: optionsScroll
         Layout.fillWidth: true
-        Layout.preferredHeight: optionsLayout.implicitHeight + Style.cardPadding
+        Layout.fillHeight: true
+        Layout.margins: Style.cardPadding
+        clip: true
+        contentWidth: availableWidth
+
+        ScrollBar.vertical.policy: ScrollBar.AsNeeded
+        ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
 
         ColumnLayout {
             id: optionsLayout
-            anchors.fill: parent
-            anchors.margins: Style.cardPadding
+            width: optionsScroll.availableWidth
             spacing: Style.spacingMedium
 
             ImOptionPill {
@@ -114,18 +124,6 @@ BaseDialog {
                 id: chkEject
                 text: qsTr("Eject media when finished")
                 accessibleDescription: qsTr("Automatically eject the storage device when the write process completes successfully")
-                Layout.fillWidth: true
-                Component.onCompleted: {
-                    focusItem.activeFocusOnTab = true
-                }
-            }
-
-            ImOptionPill {
-                id: chkTelemetry
-                text: qsTr("Enable anonymous statistics (telemetry)")
-                accessibleDescription: qsTr("Send anonymous usage statistics to help improve Raspberry Pi Imager")
-                helpLabel: imageWriter.isEmbeddedMode() ? "" : qsTr("What is this?")
-                helpUrl: imageWriter.isEmbeddedMode() ? "" : "https://github.com/raspberrypi/rpi-imager?tab=readme-ov-file#anonymous-metrics-telemetry"
                 Layout.fillWidth: true
                 Component.onCompleted: {
                     focusItem.activeFocusOnTab = true
@@ -248,12 +246,22 @@ BaseDialog {
                     confirmClearSettings.open()
                 }
             }
-        }
-    }
 
-    // Spacer
-    Item {
-        Layout.fillHeight: true
+            // Telemetry pill is the least impactful option, so it always sits
+            // at the bottom of the list — also keeps it out of the way of more
+            // commonly-toggled options like Beep / Eject / Disable warnings.
+            ImOptionPill {
+                id: chkTelemetry
+                text: qsTr("Enable anonymous statistics (telemetry)")
+                accessibleDescription: qsTr("Send anonymous usage statistics to help improve Raspberry Pi Imager")
+                helpLabel: imageWriter.isEmbeddedMode() ? "" : qsTr("What is this?")
+                helpUrl: imageWriter.isEmbeddedMode() ? "" : "https://github.com/raspberrypi/rpi-imager?tab=readme-ov-file#anonymous-metrics-telemetry"
+                Layout.fillWidth: true
+                Component.onCompleted: {
+                    focusItem.activeFocusOnTab = true
+                }
+            }
+        }
     }
 
     // Version display - only shown when window has no decorations (no title bar)
