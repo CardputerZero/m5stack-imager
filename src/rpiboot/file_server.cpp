@@ -257,7 +257,7 @@ bool FileServer::handleReadFile(IUsbTransport& transport,
 
     // Send file data via ep_write protocol:
     // 1. Control transfer announces the total size (no data payload)
-    // 2. Bulk OUT sends the actual file data in BULK_CHUNK_SIZE chunks
+    // 2. Bulk OUT sends the entire file in a single transfer
     int32_t totalSize = static_cast<int32_t>(data.size());
     uint16_t wValue = static_cast<uint16_t>(totalSize & 0xFFFF);
     uint16_t wIndex = static_cast<uint16_t>((totalSize >> 16) & 0xFFFF);
@@ -269,7 +269,16 @@ bool FileServer::handleReadFile(IUsbTransport& transport,
         return false;
     }
 
-    // Stream file data via bulk OUT
+    if (cancelled.load())
+        return false;
+
+    // Chunk the bulk transfer into BULK_CHUNK_SIZE (16 KB) pieces with a
+    // generous per-chunk timeout, matching upstream usbboot's ep_write().
+    // A single 56 MB libusb_bulk_transfer call is rejected by the macOS
+    // USB stack (LIBUSB_ERROR_IO -1) for oversized requests; the upstream
+    // tool avoids that by issuing many small calls in sequence.
+    constexpr int CHUNK_TIMEOUT_MS = 5000;
+    const uint8_t outEp = transport.outEndpoint();
     size_t offset = 0;
     while (offset < data.size()) {
         if (cancelled.load())
@@ -278,14 +287,16 @@ bool FileServer::handleReadFile(IUsbTransport& transport,
         size_t chunkSize = std::min(BULK_CHUNK_SIZE, data.size() - offset);
         auto chunk = std::span<const uint8_t>(data.data() + offset, chunkSize);
 
-        int transferred = transport.bulkWrite(transport.outEndpoint(), chunk, DEFAULT_TIMEOUT_MS);
-        if (transferred < 0) {
+        int transferred = transport.bulkWrite(outEp, chunk, CHUNK_TIMEOUT_MS);
+        if (transferred < 0 || static_cast<size_t>(transferred) != chunkSize) {
             _lastError = "Bulk write failed sending file: " + filename
-                + " at offset " + std::to_string(offset)
-                + " of " + std::to_string(data.size())
-                + " (libusb error " + std::to_string(transferred) + ")";
+                + " (transferred " + std::to_string(offset + std::max(transferred, 0))
+                + " of " + std::to_string(data.size()) + " bytes";
+            if (transferred < 0)
+                _lastError += ", libusb error " + std::to_string(transferred);
+            _lastError += ")";
             qDebug() << "rpiboot:" << _lastError.c_str()
-                     << "ep=0x" << Qt::hex << (int)transport.outEndpoint();
+                     << "ep=0x" << Qt::hex << (int)outEp;
             return false;
         }
         offset += static_cast<size_t>(transferred);
