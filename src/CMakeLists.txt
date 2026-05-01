@@ -271,6 +271,7 @@ set(SOURCES ${SOURCES}
     "fastboot/bmap.cpp"
     "fastboot/sparse_encoder.cpp"
     "fastbootflashthread.cpp"
+    "connect_device_registrar.cpp"
 )
 
 # Find Qt components - different requirements for CLI-only vs GUI builds
