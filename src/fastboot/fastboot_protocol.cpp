@@ -64,22 +64,36 @@ Response FastbootProtocol::sendCommand(rpiboot::IUsbTransport& transport,
                                         std::string_view command,
                                         int timeoutMs)
 {
+    return sendCommandCapture(transport, command, timeoutMs).terminal;
+}
+
+FastbootProtocol::CaptureResult FastbootProtocol::sendCommandCapture(
+    rpiboot::IUsbTransport& transport,
+    std::string_view command,
+    int timeoutMs)
+{
+    CaptureResult result;
+
     // Send command as ASCII via bulk OUT
     auto data = std::span<const uint8_t>(
         reinterpret_cast<const uint8_t*>(command.data()), command.size());
 
     int written = transport.bulkWrite(EP_OUT, data, timeoutMs);
     if (written < 0) {
-        return {Response::Fail, "Failed to send command", 0};
+        result.terminal = {Response::Fail, "Failed to send command", 0};
+        return result;
     }
 
-    // Read responses -- INFO/TEXT are intermediate, keep reading until OKAY/FAIL/DATA
+    // Read responses -- INFO/TEXT are intermediate; collect them and keep
+    // reading until a terminal OKAY/FAIL/DATA response is received.
     for (;;) {
         auto resp = readResponse(transport, timeoutMs);
-        if (resp.type != Response::Info && resp.type != Response::Text) {
-            return resp;
+        if (resp.type == Response::Info || resp.type == Response::Text) {
+            result.infoLines.push_back(resp.message);
+            continue;
         }
-        // INFO/TEXT: continue reading for the terminal response
+        result.terminal = resp;
+        return result;
     }
 }
 

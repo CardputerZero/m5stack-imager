@@ -40,6 +40,19 @@ public:
                          std::string_view command,
                          int timeoutMs);
 
+    // Send an ASCII command and capture every INFO/TEXT line emitted
+    // by the device before the terminal OKAY/FAIL response.  Useful
+    // for OEM commands (e.g. "getvar public-key", "oem fwcrypto
+    // sign-hash") whose payload is delivered across multiple INFO
+    // packets rather than in the terminal response message.
+    struct CaptureResult {
+        Response terminal;
+        std::vector<std::string> infoLines;
+    };
+    CaptureResult sendCommandCapture(rpiboot::IUsbTransport& transport,
+                                      std::string_view command,
+                                      int timeoutMs);
+
     // Download data to the device (for use with flash).
     // Sends "download:<hex-size>", waits for DATA response, then
     // streams the data via bulk OUT.
