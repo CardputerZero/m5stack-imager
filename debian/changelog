@@ -1,3 +1,69 @@
+rpi-imager (2.0.9) unstable; urgency=medium
+
+  * Pi Connect:
+    - New ConnectDeviceRegistrar over HTTPS with on-device signing
+    - Wizard flow for Pi Connect for Organisations enrolment
+    - Organisation registration and provisioning-token tracking
+    - Register device identity with Connect after fastboot flash
+  * Secure Boot / rpiboot:
+    - Rewrite SecureBootProvisioner for in-place CM5 re-provisioning
+    - Add CM5 re-provisioning pipeline in FirmwareManager
+    - New BootloaderImage TLV editor for pieeprom.bin
+    - Bootfiles repacking via replaceEntry + writeToFile
+    - config-sig generation, RSA public-key extraction and
+      bootcode2712 signing
+    - Debug toggles for force-secure-boot and sign-fastboot-gadget
+  * Fastboot:
+    - Capture INFO/TEXT lines for OEM commands
+    - Chunk file_server bulk transfers
+    - Resolve cache before fastboot flash
+    - Pause drive scan during auto-bootstrap
+    - Track naked rpiboot devices separately in the drive list
+    - Fix command truncation
+    - Normalise custom gadget paths so local files can be used
+  * OS Customisation:
+    - cloud-init: drop enable_ssh in favour of systemctl runcmd
+    - cloud-init: use 'user' (not 'users') for user configuration
+    - Fix serial-if disabled handling
+  * UI:
+    - Reduced motion support for accessibility
+    - Make AppOptionsDialog scrollable; move Telemetry to bottom
+    - Align SecureBoot step container styling
+  * Write Operations:
+    - Remove the 512-byte alignment requirement
+    - Better overflow handling in DeviceWrapper for GPT and MBR
+      partitions and FAT partition long filenames
+    - disk_formatter: handle extremely large sectors_per_fat
+    - downloadextractthread: use shared_ptr for the write ringbuffer
+    - cachemanager: fix TOCTOU on directory existence check
+  * Device I/O:
+    - Read per-device I/O limits to inform write tuning
+  * Windows:
+    - Propagate write error handling through FileOperations
+    - Advertise long path, DPI awareness and UTF-8 codepage
+    - Geometric backoff for volume lock; wait for clean completion
+    - Uninstaller preserves user preferences, removes cache and
+      customisation data
+    - Use secure memory erase for WiFi credentials
+  * macOS:
+    - Use secure memory erase for WiFi credentials
+  * Linux:
+    - Prefer kreadconfig6, fall back to kreadconfig5; pick the right
+      binary via KDE_SESSION_VERSION
+    - SuspendInhibitor and launchDetached use explicit search paths
+    - AppImage: exclude libsystemd, libdbus-1, libcap for Linux
+      Desktop AppImages
+  * Embedded:
+    - Use explicit path for the reboot command
+  * Tests:
+    - Relocate disk_formatter_test, add CMake target, build on
+      non-Windows platforms
+  * Licensing:
+    - Add nghttp2, libusb and yescrypt to the licence manifest
+  * i18n: Updated French, Irish and Turkish translation dictionaries
+
+ -- Tom Dewey <tom.dewey@raspberrypi.com>  Fri, 01 May 2026 16:30:00 +0100
+
 rpi-imager (2.0.8) unstable; urgency=medium
 
   * Fastboot:
