@@ -91,6 +91,76 @@ const std::vector<uint8_t>* Bootfiles::find(const std::string& name,
     return nullptr;
 }
 
+bool Bootfiles::replaceEntry(const std::string& name, std::vector<uint8_t> data)
+{
+    auto it = _files.find(name);
+    if (it == _files.end()) {
+        // Try with leading "./" too, mirroring find()
+        it = _files.find("./" + name);
+        if (it == _files.end()) {
+            _lastError = "replaceEntry: entry not found: " + name;
+            return false;
+        }
+    }
+    it->second = std::move(data);
+    return true;
+}
+
+bool Bootfiles::writeToFile(const std::string& path)
+{
+    ::archive* a = archive_write_new();
+    // USTAR is the most portable / minimal tar format; it's what the
+    // upstream `tar -vcf` produces by default on most Linux distros and
+    // what the BCM2712 bootloader is happy to parse.
+    archive_write_set_format_ustar(a);
+    if (archive_write_open_filename(a, path.c_str()) != ARCHIVE_OK) {
+        _lastError = std::string("writeToFile: ") + archive_error_string(a);
+        archive_write_free(a);
+        return false;
+    }
+
+    for (const auto& [name, data] : _files) {
+        ::archive_entry* e = archive_entry_new();
+        archive_entry_set_pathname(e, name.c_str());
+        archive_entry_set_size(e, static_cast<la_int64_t>(data.size()));
+        archive_entry_set_filetype(e, AE_IFREG);
+        // Match the file mode rpi-eeprom firmware ships with (0644).
+        archive_entry_set_perm(e, 0644);
+
+        if (archive_write_header(a, e) != ARCHIVE_OK) {
+            _lastError = std::string("writeToFile header for ") + name + ": "
+                       + archive_error_string(a);
+            archive_entry_free(e);
+            archive_write_close(a);
+            archive_write_free(a);
+            return false;
+        }
+
+        if (!data.empty()) {
+            la_ssize_t written = archive_write_data(a, data.data(), data.size());
+            if (written < 0 ||
+                static_cast<size_t>(written) != data.size()) {
+                _lastError = std::string("writeToFile data for ") + name + ": "
+                           + (written < 0 ? archive_error_string(a) : "short write");
+                archive_entry_free(e);
+                archive_write_close(a);
+                archive_write_free(a);
+                return false;
+            }
+        }
+
+        archive_entry_free(e);
+    }
+
+    if (archive_write_close(a) != ARCHIVE_OK) {
+        _lastError = std::string("writeToFile close: ") + archive_error_string(a);
+        archive_write_free(a);
+        return false;
+    }
+    archive_write_free(a);
+    return true;
+}
+
 bool Bootfiles::extractFromArchive(::archive* a)
 {
     ::archive_entry* entry;

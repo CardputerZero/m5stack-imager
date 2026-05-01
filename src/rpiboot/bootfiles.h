@@ -41,6 +41,18 @@ public:
     const std::vector<uint8_t>* find(const std::string& name,
                                       std::string_view chipPrefix = {}) const;
 
+    // Replace (or insert) the contents of a single entry in the in-memory
+    // archive.  Used to splice a customer-counter-signed bootcode into the
+    // bootfiles.bin we serve to the device.  Returns false if the entry
+    // doesn't exist (use append-style writeToFile for new entries instead).
+    bool replaceEntry(const std::string& name, std::vector<uint8_t> data);
+
+    // Re-pack the current in-memory entries as a USTAR archive at `path`.
+    // Entries are written in alphabetical order (the upstream bootloader
+    // doesn't depend on tar ordering).  Returns false on I/O / libarchive
+    // error; details in lastError().
+    bool writeToFile(const std::string& path);
+
     // Number of entries extracted
     size_t size() const { return _files.size(); }
 
