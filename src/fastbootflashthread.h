@@ -52,6 +52,13 @@ public:
     // When set, unmapped blocks are skipped during fastboot flash.
     void setBmapUrl(const QUrl &url) { _bmapUrl = url; }
 
+    // Configure Raspberry Pi Connect Device Identity registration.
+    // When apiKey is non-empty, the device will be registered with
+    // the Connect management API after flashing and before reboot.
+    // Failures are non-fatal and will not block successful flash.
+    void setConnectRegistration(const QString &apiKey,
+                                 const QString &descriptionPrefix);
+
 signals:
     void writing();   // Emitted when download+flash pipeline starts
     void success();
@@ -103,6 +110,10 @@ private:
     QByteArray _cloudinit;
     QByteArray _cloudinitNetwork;
     QByteArray _initFormat;
+
+    // Raspberry Pi Connect Device Identity registration (optional)
+    QString _connectApiKey;
+    QString _connectDescriptionPrefix;
 };
 
 #endif // FASTBOOTFLASHTHREAD_H

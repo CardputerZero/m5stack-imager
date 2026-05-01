@@ -8,6 +8,7 @@
 #include "fastboot/fastboot_protocol.h"
 #include "fastboot/sparse_encoder.h"
 #include "fastboot/bmap.h"
+#include "connect_device_registrar.h"
 #include "curlnetworkconfig.h"
 #include "acceleratedcryptographichash.h"
 #include "ringbuffer.h"
@@ -88,6 +89,13 @@ void FastbootFlashThread::setImageCustomisation(const QByteArray &config,
     _cloudinit = cloudinit;
     _cloudinitNetwork = cloudinitNetwork;
     _initFormat = initFormat;
+}
+
+void FastbootFlashThread::setConnectRegistration(const QString &apiKey,
+                                                   const QString &descriptionPrefix)
+{
+    _connectApiKey = apiKey;
+    _connectDescriptionPrefix = descriptionPrefix;
 }
 
 bool FastbootFlashThread::applyCustomisation(fastboot::FastbootProtocol& fb,
@@ -764,7 +772,36 @@ void FastbootFlashThread::runImpl()
     }
     qDebug() << "FastbootFlashThread: customisation OK";
 
-    // 10. Finalize
+    // 10. Register device identity with Raspberry Pi Connect (optional,
+    //     non-fatal).  Must happen while the device is still in fastboot
+    //     mode so we can query its public key and ask it to sign the
+    //     request via the firmware crypto engine.
+    if (!_connectApiKey.isEmpty()) {
+        emit preparationStatusUpdate(tr("Registering device identity with Raspberry Pi Connect..."));
+
+        // Gather board identifiers for the Connect description field.
+        QString boardDescription;
+        if (auto boardVar = fb.getVar(*transport, "product")) {
+            boardDescription = QString::fromStdString(*boardVar);
+        }
+        QString serial;
+        if (auto serialVar = fb.getVar(*transport, "serialno")) {
+            serial = QString::fromStdString(*serialVar);
+        }
+
+        ConnectDeviceRegistrar registrar(_connectApiKey, _connectDescriptionPrefix);
+        auto result = registrar.registerDevice(fb, *transport,
+                                                boardDescription, serial);
+        if (result.ok) {
+            qDebug() << "Connect: device identity registered, id="
+                     << result.deviceId;
+        } else {
+            qWarning() << "Connect: registration failed:"
+                       << result.errorMessage;
+        }
+    }
+
+    // 11. Finalize
     emit finalizing();
 
     auto resp = fb.sendCommand(*transport, "reboot", 10000);
