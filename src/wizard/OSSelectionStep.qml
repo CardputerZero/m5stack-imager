@@ -175,7 +175,7 @@ WizardStepBase {
                 root.wizardContainer.sshEnabled = false
                 root.wizardContainer.piConnectEnabled = false
                 root.wizardContainer.piConnectAvailable = false
-                root.wizardContainer.secureBootAvailable = imageWriter.isSecureBootForcedByCliFlag()
+                root.wizardContainer.secureBootAvailable = imageWriter.isSecureBootForcedByCliFlag() || imageWriter.getDebugForceSecureBoot()
             }
             root.customSelected = true
             root.customSelectedSize = imageWriter.getSelectedSourceSize()
@@ -703,7 +703,7 @@ WizardStepBase {
                 root.wizardContainer.selectedOsName = model.name
                 root.wizardContainer.customizationSupported = imageWriter.imageSupportsCustomization()
                 root.wizardContainer.piConnectAvailable = false
-                root.wizardContainer.secureBootAvailable = imageWriter.isSecureBootForcedByCliFlag()
+                root.wizardContainer.secureBootAvailable = imageWriter.isSecureBootForcedByCliFlag() || imageWriter.getDebugForceSecureBoot()
                 root.wizardContainer.passwordlessSudoAvailable = false
                 root.wizardContainer.ccRpiAvailable = false
                 root.wizardContainer.ifAndFeaturesAvailable = false
@@ -730,7 +730,7 @@ WizardStepBase {
                 root.wizardContainer.selectedOsName = model.name
                 root.wizardContainer.customizationSupported = imageWriter.imageSupportsCustomization()
                 root.wizardContainer.piConnectAvailable = imageWriter.checkSWCapability("rpi_connect")
-                root.wizardContainer.secureBootAvailable = imageWriter.checkSWCapability("secure_boot") || imageWriter.isSecureBootForcedByCliFlag()
+                root.wizardContainer.secureBootAvailable = imageWriter.checkSWCapability("secure_boot") || imageWriter.isSecureBootForcedByCliFlag() || imageWriter.getDebugForceSecureBoot()
                 root.wizardContainer.passwordlessSudoAvailable = imageWriter.checkSWCapability("passwordless_sudo")
                 root.wizardContainer.ccRpiAvailable = imageWriter.imageSupportsCcRpi()
                 

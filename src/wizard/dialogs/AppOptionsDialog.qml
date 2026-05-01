@@ -187,7 +187,8 @@ BaseDialog {
                 // Only show if secure boot is available (via OS capabilities or CLI flag)
                 visible: (wizardContainer && wizardContainer.secureBootAvailable) ||
                          imageWriter.isSecureBootForcedByCliFlag() ||
-                         imageWriter.checkSWCapability("secure_boot")
+                         imageWriter.checkSWCapability("secure_boot") ||
+                         imageWriter.getDebugForceSecureBoot()
                 // Disable while write is in progress
                 enabled: imageWriter.writeState === ImageWriter.Idle ||
                          imageWriter.writeState === ImageWriter.Succeeded ||

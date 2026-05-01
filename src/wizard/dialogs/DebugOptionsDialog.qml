@@ -35,8 +35,8 @@ BaseDialog {
             }
             return []
         }, 0)
-        registerFocusGroup("options", function(){ 
-            return [chkDirectIO.focusItem, chkAsyncIO.focusItem, chkIgnoreDeviceLimits.focusItem, chkPeriodicSync.focusItem, chkVerboseLogging.focusItem, chkIPv4Only.focusItem, chkSkipEndOfDevice.focusItem, chkRpiboot.focusItem, browseGadgetButton]
+        registerFocusGroup("options", function(){
+            return [chkDirectIO.focusItem, chkAsyncIO.focusItem, chkIgnoreDeviceLimits.focusItem, chkPeriodicSync.focusItem, chkVerboseLogging.focusItem, chkIPv4Only.focusItem, chkSkipEndOfDevice.focusItem, chkRpiboot.focusItem, browseGadgetButton, chkForceSecureBoot.focusItem, chkSignFastbootGadget.focusItem]
         }, 1)
         registerFocusGroup("buttons", function(){ 
             return [cancelButton, applyButton]
@@ -384,6 +384,53 @@ BaseDialog {
                 }
             }
 
+            // Spacer
+            Item {
+                Layout.preferredHeight: Style.spacingMedium
+            }
+
+            // Section header for secure boot
+            Text {
+                text: qsTr("Secure Boot")
+                font.pointSize: Style.fontSizeFormLabel
+                font.family: Style.fontFamilyBold
+                font.bold: true
+                color: Style.textDescriptionColor
+                Layout.fillWidth: true
+            }
+
+            ImOptionPill {
+                id: chkForceSecureBoot
+                text: qsTr("Force Secure Boot Available")
+                accessibleDescription: qsTr("Show secure boot customisation regardless of OS capabilities. Equivalent to the --enable-secure-boot CLI flag.")
+                Layout.fillWidth: true
+                Component.onCompleted: {
+                    focusItem.activeFocusOnTab = true
+                }
+            }
+
+            ImOptionPill {
+                id: chkSignFastbootGadget
+                text: qsTr("CM5 re-provisioning mode (sign gadget, pieeprom, recovery)")
+                accessibleDescription: qsTr("Counter-sign the fastboot gadget, pieeprom EEPROM image and recovery bootcode using the RSA key configured in App Options. Only enable when re-provisioning a Compute Module 5 whose secure-boot OTP is already fused; on a fresh CM5 the counter-signed firmware will not boot.")
+                Layout.fillWidth: true
+                Component.onCompleted: {
+                    focusItem.activeFocusOnTab = true
+                }
+            }
+
+            // Warning when signing is enabled without an RSA key configured
+            Text {
+                Layout.fillWidth: true
+                Layout.leftMargin: Style.spacingLarge
+                visible: chkSignFastbootGadget.checked && !imageWriter.getStringSetting("secureboot_rsa_key")
+                text: qsTr("⚠️ No Secure Boot RSA key configured. Set one in App Options → Secure Boot RSA Key, otherwise signing will be skipped.")
+                font.pointSize: Style.fontSizeSmall
+                font.family: Style.fontFamily
+                color: Style.formLabelErrorColor
+                wrapMode: Text.WordWrap
+            }
+
             // Status display
             Rectangle {
                 Layout.fillWidth: true
@@ -502,6 +549,8 @@ BaseDialog {
             chkSkipEndOfDevice.checked = imageWriter.getDebugSkipEndOfDevice();
             chkRpiboot.checked = imageWriter.getDebugRpiboot();
             gadgetPathText.gadgetPath = imageWriter.getDebugCustomFastbootGadget();
+            chkForceSecureBoot.checked = imageWriter.getDebugForceSecureBoot();
+            chkSignFastbootGadget.checked = imageWriter.getDebugSignFastbootGadget();
 
             initialized = true;
             isInitializing = false;
@@ -520,6 +569,8 @@ BaseDialog {
         imageWriter.setDebugSkipEndOfDevice(chkSkipEndOfDevice.checked);
         imageWriter.setDebugRpiboot(chkRpiboot.checked);
         imageWriter.setDebugCustomFastbootGadget(gadgetPathText.gadgetPath || "");
+        imageWriter.setDebugForceSecureBoot(chkForceSecureBoot.checked);
+        imageWriter.setDebugSignFastbootGadget(chkSignFastbootGadget.checked);
 
         console.log("Debug options applied: DirectIO=" + chkDirectIO.checked +
                     ", AsyncIO=" + chkAsyncIO.checked +
@@ -528,7 +579,9 @@ BaseDialog {
                     ", VerboseLogging=" + chkVerboseLogging.checked +
                     ", IPv4Only=" + chkIPv4Only.checked +
                     ", SkipEndOfDevice=" + chkSkipEndOfDevice.checked +
-                    ", Rpiboot=" + chkRpiboot.checked);
+                    ", Rpiboot=" + chkRpiboot.checked +
+                    ", ForceSecureBoot=" + chkForceSecureBoot.checked +
+                    ", SignFastbootGadget=" + chkSignFastbootGadget.checked);
     }
 
     onOpened: {
