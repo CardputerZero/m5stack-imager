@@ -152,7 +152,9 @@ ImageWriter::ImageWriter(QObject *parent)
     _debugSkipEndOfDevice = false; // Normal behavior; enable for counterfeit cards
     _debugIgnoreDeviceLimits = false; // Use device-reported I/O limits by default
     _debugRpiboot = false;          // Rpiboot/fastboot support disabled by default
-    
+    _debugForceSecureBoot = false;  // No UI override; CLI flag still wins
+    _debugSignFastbootGadget = false; // CM5 re-provisioning: sign fastboot gadget
+
     // Calculate optimal async queue depth based on system memory
     _debugAsyncQueueDepth = SystemMemoryManager::instance().getOptimalAsyncQueueDepth();
     
@@ -654,6 +656,21 @@ void ImageWriter::onRpibootDeviceDetected(const QString &deviceId,
         devInfo.chipGeneration = *gen;
 
     auto *thread = new RpibootThread(devInfo, _rpibootSideloadMode, this);
+    if (!_debugCustomFastbootGadget.isEmpty())
+        thread->setCustomFastbootGadget(_debugCustomFastbootGadget);
+    // Plumb the re-provisioning key through to FirmwareManager so the
+    // bootcode upload + gadget signing run on auto-bootstrap too — without
+    // this a pre-fused CM5 silently rejects the unsigned bootcode and the
+    // 15s re-enumerate timeout fires.
+    if (_debugSignFastbootGadget) {
+        QString rsaKey = _settings.value(QStringLiteral("secureboot_rsa_key")).toString();
+        if (rsaKey.isEmpty()) {
+            qWarning() << "Auto-bootstrap: re-provisioning enabled but no secure boot RSA key configured; "
+                          "uploaded bootcode will not be counter-signed and the device will reject it";
+        } else {
+            thread->setSignFastbootGadgetKey(rsaKey);
+        }
+    }
 
     connect(thread, &RpibootThread::fastbootDeviceReady, this,
             [this, ppKey](const QString &fastbootId) {
@@ -1006,6 +1023,14 @@ void ImageWriter::startWrite()
         _rpibootThread = new RpibootThread(devInfo, _rpibootSideloadMode, this);
         if (!_debugCustomFastbootGadget.isEmpty())
             _rpibootThread->setCustomFastbootGadget(_debugCustomFastbootGadget);
+        if (_debugSignFastbootGadget) {
+            QString rsaKey = _settings.value("secureboot_rsa_key").toString();
+            if (rsaKey.isEmpty()) {
+                qWarning() << "Debug: Sign fastboot gadget requested, but no secure boot RSA key is configured; skipping signing";
+            } else {
+                _rpibootThread->setSignFastbootGadgetKey(rsaKey);
+            }
+        }
 
         // After sideload, start FastbootFlashThread
         connect(_rpibootThread, &RpibootThread::fastbootDeviceReady, this, &ImageWriter::onRpibootFastbootReady);
@@ -3480,6 +3505,32 @@ void ImageWriter::setDebugCustomFastbootGadget(const QString &path)
     if (_debugCustomFastbootGadget != localPath) {
         _debugCustomFastbootGadget = localPath;
         qDebug() << "Debug: Custom fastboot gadget" << (localPath.isEmpty() ? "cleared" : localPath);
+    }
+}
+
+bool ImageWriter::getDebugForceSecureBoot() const
+{
+    return _debugForceSecureBoot;
+}
+
+void ImageWriter::setDebugForceSecureBoot(bool enabled)
+{
+    if (_debugForceSecureBoot != enabled) {
+        _debugForceSecureBoot = enabled;
+        qDebug() << "Debug: Force Secure Boot available" << (enabled ? "enabled" : "disabled");
+    }
+}
+
+bool ImageWriter::getDebugSignFastbootGadget() const
+{
+    return _debugSignFastbootGadget;
+}
+
+void ImageWriter::setDebugSignFastbootGadget(bool enabled)
+{
+    if (_debugSignFastbootGadget != enabled) {
+        _debugSignFastbootGadget = enabled;
+        qDebug() << "Debug: Sign fastboot gadget" << (enabled ? "enabled" : "disabled");
     }
 }
 

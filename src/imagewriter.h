@@ -283,6 +283,10 @@ public:
     Q_INVOKABLE void setDebugRpiboot(bool enabled);
     Q_INVOKABLE QString getDebugCustomFastbootGadget() const;
     Q_INVOKABLE void setDebugCustomFastbootGadget(const QString &path);
+    Q_INVOKABLE bool getDebugForceSecureBoot() const;
+    Q_INVOKABLE void setDebugForceSecureBoot(bool enabled);
+    Q_INVOKABLE bool getDebugSignFastbootGadget() const;
+    Q_INVOKABLE void setDebugSignFastbootGadget(bool enabled);
 
     // Customisation API
     Q_INVOKABLE void applyCustomisationFromSettings(const QVariantMap &settings);  // Main entry: generates scripts from settings
@@ -508,6 +512,8 @@ protected:
     bool _debugIgnoreDeviceLimits;
     bool _debugRpiboot;
     QString _debugCustomFastbootGadget;
+    bool _debugForceSecureBoot;
+    bool _debugSignFastbootGadget;
 
     QString _rpibootDeviceId;
     bool _isRpibootDevice = false;
