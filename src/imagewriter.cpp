@@ -666,6 +666,17 @@ void ImageWriter::onRpibootDeviceDetected(const QString &deviceId,
     connect(thread, &RpibootThread::preparationStatusUpdate, this, &ImageWriter::onPreparationStatusUpdate);
 
     _activeBootstrapThreads[ppKey] = thread;
+
+    // Pause drive scanning for the duration of the bootstrap.  The poll
+    // thread also calls libusb_get_device_list / scanRpibootDevices on a
+    // 1 s tick, and on macOS concurrent libusb access against the same
+    // bus while the bootstrap thread is doing sustained bulk transfers
+    // produces sporadic LIBUSB_ERROR_IO / NO_DEVICE failures partway
+    // through boot.img upload (variable cutoff at ~12-14 MB).  Same
+    // pattern the regular write path uses while WriteState != Idle.
+    qDebug() << "Auto-bootstrap: pausing drive scan to avoid concurrent libusb access";
+    _drivelist.pausePolling();
+
     thread->start();
 }
 
@@ -680,8 +691,13 @@ void ImageWriter::onBootstrapComplete(const QString &portPathKey, const QString 
     }
     _bootstrappingDevices.remove(portPathKey);
 
-    // Enable fastboot scanning so the poll thread discovers storage devices
+    // Enable fastboot scanning so the poll thread discovers storage devices,
+    // then unpause polling — paired with pausePolling() in the bootstrap kickoff.
     _drivelist.setFastbootScanEnabled(true);
+    if (_activeBootstrapThreads.isEmpty()) {
+        qDebug() << "Auto-bootstrap: resuming drive scan";
+        _drivelist.resumePolling();
+    }
 }
 
 void ImageWriter::onBootstrapError(const QString &portPathKey, const QString &msg)
@@ -694,6 +710,14 @@ void ImageWriter::onBootstrapError(const QString &portPathKey, const QString &ms
         _activeBootstrapThreads.remove(portPathKey);
     }
     _bootstrappingDevices.remove(portPathKey);
+
+    // Unpause drive scanning when the last bootstrap finishes (success or
+    // error).  Only resume once no bootstraps remain in flight, in case
+    // multiple devices are being bootstrapped simultaneously.
+    if (_activeBootstrapThreads.isEmpty()) {
+        qDebug() << "Auto-bootstrap: resuming drive scan after error";
+        _drivelist.resumePolling();
+    }
 }
 
 void ImageWriter::onRpibootFastbootReady(const QString &fastbootId)
