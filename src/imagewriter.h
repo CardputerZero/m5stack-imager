@@ -261,6 +261,22 @@ public:
     Q_INVOKABLE QString getStringSetting(const QString &key);
     Q_INVOKABLE void setSetting(const QString &key, const QVariant &value);
     Q_INVOKABLE QString getRsaKeyFingerprint(const QString &keyPath);
+
+    // Raspberry Pi Connect organisation registration.
+    //
+    // The API key IS persisted (QSettings) so users don't have to
+    // re-enter it every session, but it is write-only from QML —
+    // once saved, the value is never handed back to the UI.  QML
+    // uses hasConnectOrgRegistration() to decide whether to render
+    // a "key already set" placeholder, and clearConnectOrgRegistration()
+    // to remove it.  The description prefix is not secret and is
+    // returned through getConnectOrgDescription() for edit-in-place.
+    Q_INVOKABLE void setConnectOrgRegistration(const QString &apiKey,
+                                                 const QString &descriptionPrefix);
+    Q_INVOKABLE void setConnectOrgDescription(const QString &descriptionPrefix);
+    Q_INVOKABLE void clearConnectOrgRegistration();
+    Q_INVOKABLE bool hasConnectOrgRegistration() const;
+    Q_INVOKABLE QString getConnectOrgDescription() const;
     
     // Debug options (secret menu: Cmd+Option+S on macOS, Ctrl+Alt+S on others)
     Q_INVOKABLE bool getDebugDirectIO() const;
@@ -331,6 +347,11 @@ public:
     Q_INVOKABLE QString getRuntimeConnectToken() const;
     Q_INVOKABLE bool verifyAuthKey(const QString &token, bool strict = false) const;
     Q_INVOKABLE void clearConnectToken();
+    // Clear the runtime Connect token only if it was minted by
+    // requestOrgAuthKey().  Used by the wizard to drop a stale
+    // org-minted key when the user changes storage / OS without
+    // clobbering a per-user token the user typed in themselves.
+    Q_INVOKABLE void discardOrgMintedConnectToken();
     
     /* Override OS list refresh schedule (in minutes); pass negative to clear override */
     Q_INVOKABLE void setOsListRefreshOverride(int intervalMinutes, int jitterMinutes);
@@ -354,6 +375,19 @@ public:
 
     /* Set a fastboot storage device as the write target */
     Q_INVOKABLE void setFastbootDevice(const QString &device, quint64 size);
+    /* Returns true if the current target is a fastboot storage device */
+    Q_INVOKABLE bool isFastbootDevice() const;
+
+    // Mint a single-use Raspberry Pi Connect auth key for the
+    // currently configured organisation API key.  Used when the
+    // target is not a fastboot device — the returned secret is
+    // written into the OS image's customisation as if the user had
+    // pasted a per-user token.  Returns a map with:
+    //   ok      bool    — true on success
+    //   secret  string  — "rpoak_..." on success
+    //   error   string  — server message on failure (401 / 422 / other)
+    Q_INVOKABLE QVariantMap requestOrgAuthKey(const QString &description,
+                                               int ttlDays = 1);
 
     /* Performance data export - opens native save dialog and writes performance data to file.
        If native dialogs aren't available, emits performanceSaveDialogNeeded for QML fallback. */
@@ -488,6 +522,11 @@ protected:
     int _refreshJitterOverrideMinutes;
     // Session-only storage for Raspberry Pi Connect token
     QString _piConnectToken;
+    // True when the current _piConnectToken was minted by us via
+    // requestOrgAuthKey() (rather than typed/pasted by the user).
+    // Lets the wizard drop only its own minted keys on storage / OS
+    // changes without clobbering a user-supplied token.
+    bool _piConnectTokenIsOrgMinted = false;
     // CLI flag to force enable secure boot regardless of OS capabilities
     static bool _forceSecureBootEnabled;
 #ifndef CLI_ONLY_BUILD

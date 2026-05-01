@@ -61,6 +61,7 @@
 #include "rpibootthread.h"
 #include "fastbootflashthread.h"
 #include "fastbootflashthread.h"
+#include "connect_device_registrar.h"
 #include "curlnetworkconfig.h"
 #include <QDebug>
 #include <QJsonObject>
@@ -154,7 +155,7 @@ ImageWriter::ImageWriter(QObject *parent)
     _debugRpiboot = false;          // Rpiboot/fastboot support disabled by default
     _debugForceSecureBoot = false;  // No UI override; CLI flag still wins
     _debugSignFastbootGadget = false; // CM5 re-provisioning: sign fastboot gadget
-
+    
     // Calculate optimal async queue depth based on system memory
     _debugAsyncQueueDepth = SystemMemoryManager::instance().getOptimalAsyncQueueDepth();
     
@@ -621,6 +622,11 @@ void ImageWriter::setFastbootDevice(const QString &device, quint64 size)
              << "id=" << _fastbootId << "block=" << _fastbootBlockDevice;
 }
 
+bool ImageWriter::isFastbootDevice() const
+{
+    return _isFastbootDevice;
+}
+
 void ImageWriter::onRpibootDeviceDetected(const QString &deviceId,
                                             uint8_t busNumber, uint8_t deviceAddress,
                                             const QList<uint8_t> &portPath, uint16_t productId)
@@ -773,6 +779,21 @@ void ImageWriter::onRpibootFastbootReady(const QString &fastbootId)
     _fastbootFlashThread->setImageCustomisation(_config, _cmdline, _firstrun, _cloudinit, _cloudinitNetwork, _initFormat);
     if (!_bmapUrl.isEmpty())
         _fastbootFlashThread->setBmapUrl(QUrl(_bmapUrl));
+
+    // Propagate Raspberry Pi Connect organisation registration.
+    // The API key is persisted in QSettings but never handed back to
+    // QML; read it directly here and forward to the flash thread.
+    // Only applies when "Raspberry Pi Connect for Organisations" is
+    // enabled in App Options.
+    if (_settings.value(QStringLiteral("connect_org_enabled")).toBool()) {
+        const QString orgKey =
+            _settings.value(QStringLiteral("connect_org_api_key")).toString();
+        if (!orgKey.isEmpty()) {
+            const QString orgDesc =
+                _settings.value(QStringLiteral("connect_org_description")).toString();
+            _fastbootFlashThread->setConnectRegistration(orgKey, orgDesc);
+        }
+    }
     connect(_fastbootFlashThread, &FastbootFlashThread::success, this, &ImageWriter::onSuccess);
     connect(_fastbootFlashThread, &FastbootFlashThread::error, this, &ImageWriter::onError);
     connect(_fastbootFlashThread, &FastbootFlashThread::preparationStatusUpdate, this, &ImageWriter::onPreparationStatusUpdate);
@@ -953,6 +974,19 @@ void ImageWriter::startWrite()
         _fastbootFlashThread->setImageCustomisation(_config, _cmdline, _firstrun, _cloudinit, _cloudinitNetwork, _initFormat);
         if (!_bmapUrl.isEmpty())
             _fastbootFlashThread->setBmapUrl(QUrl(_bmapUrl));
+        // Same Connect-org wire-up as the rpiboot path: when the user
+        // picked a fastboot storage device directly, register the
+        // device's firmware identity with the organisation before
+        // reboot.
+        if (_settings.value(QStringLiteral("connect_org_enabled")).toBool()) {
+            const QString orgKey =
+                _settings.value(QStringLiteral("connect_org_api_key")).toString();
+            if (!orgKey.isEmpty()) {
+                const QString orgDesc =
+                    _settings.value(QStringLiteral("connect_org_description")).toString();
+                _fastbootFlashThread->setConnectRegistration(orgKey, orgDesc);
+            }
+        }
         connect(_fastbootFlashThread, &FastbootFlashThread::success, this, &ImageWriter::onSuccess);
         connect(_fastbootFlashThread, &FastbootFlashThread::error, this, &ImageWriter::onError);
         connect(_fastbootFlashThread, &FastbootFlashThread::preparationStatusUpdate, this, &ImageWriter::onPreparationStatusUpdate);
@@ -3354,7 +3388,117 @@ bool ImageWriter::getBoolSetting(const QString &key)
 
 QString ImageWriter::getStringSetting(const QString &key)
 {
+    // The Connect organisation API key is a persisted secret: the
+    // UI is never allowed to read it back.  Use hasConnectOrgRegistration()
+    // / clearConnectOrgRegistration() from QML instead.
+    if (key == QLatin1String("connect_org_api_key"))
+        return QString();
     return _settings.value(key).toString();
+}
+
+void ImageWriter::setConnectOrgRegistration(const QString &apiKey,
+                                              const QString &descriptionPrefix)
+{
+    const QString trimmedKey = apiKey.trimmed();
+    const QString trimmedDesc = descriptionPrefix.trimmed();
+    if (trimmedKey.isEmpty()) {
+        // Leave any existing stored key intact; only update description.
+        setConnectOrgDescription(trimmedDesc);
+        return;
+    }
+    // The key is concatenated into "Authorization: Bearer <key>" before
+    // hitting curl_slist_append.  Any control character (CR, LF, NUL,
+    // etc.) would let a pasted value split the request and inject extra
+    // headers — reject up front rather than rely on the receiver.
+    for (QChar ch : trimmedKey) {
+        if (ch.unicode() < 0x20 || ch.unicode() == 0x7F) {
+            qWarning() << "Connect: refusing organisation API key with control characters";
+            return;
+        }
+    }
+    _settings.setValue(QStringLiteral("connect_org_api_key"), trimmedKey);
+    _settings.setValue(QStringLiteral("connect_org_description"), trimmedDesc);
+    _settings.sync();
+}
+
+void ImageWriter::setConnectOrgDescription(const QString &descriptionPrefix)
+{
+    _settings.setValue(QStringLiteral("connect_org_description"),
+                       descriptionPrefix.trimmed());
+    _settings.sync();
+}
+
+void ImageWriter::clearConnectOrgRegistration()
+{
+    _settings.remove(QStringLiteral("connect_org_api_key"));
+    _settings.remove(QStringLiteral("connect_org_description"));
+    _settings.sync();
+}
+
+bool ImageWriter::hasConnectOrgRegistration() const
+{
+    return !_settings.value(QStringLiteral("connect_org_api_key"))
+                     .toString().isEmpty();
+}
+
+QString ImageWriter::getConnectOrgDescription() const
+{
+    return _settings.value(QStringLiteral("connect_org_description")).toString();
+}
+
+QVariantMap ImageWriter::requestOrgAuthKey(const QString &description, int ttlDays)
+{
+    QVariantMap out;
+    out.insert(QStringLiteral("ok"), false);
+
+    const QString apiKey =
+        _settings.value(QStringLiteral("connect_org_api_key")).toString();
+    if (apiKey.isEmpty()) {
+        qWarning() << "Connect: cannot mint auth key — no organisation API key set";
+        out.insert(QStringLiteral("error"),
+                   tr("No organisation API key is configured."));
+        return out;
+    }
+
+    // Clamp the TTL.  The signature is Q_INVOKABLE so any QML caller
+    // (including a future bug) could ask for a 10-year key; cap it
+    // server-independently to a sensible window.  <= 0 falls through
+    // to the registrar's "omit field" path so the server picks its
+    // own default.
+    constexpr int kMaxTtlDays = 30;
+    if (ttlDays > kMaxTtlDays)
+        ttlDays = kMaxTtlDays;
+
+    ConnectDeviceRegistrar registrar(apiKey, QString());
+    auto result = registrar.requestAuthKey(description, ttlDays);
+    if (!result.ok) {
+        qWarning() << "Connect: auth-key request failed:" << result.errorMessage;
+        out.insert(QStringLiteral("error"), result.errorMessage);
+        return out;
+    }
+    // Defence-in-depth: the secret is about to be written into a
+    // shell heredoc / cloud-init runcmd as a Pi Connect token.  An
+    // attacker who can MITM (or compromise) the Connect API could
+    // return a "secret" containing newlines / shell metacharacters,
+    // closing the heredoc early and gaining root execution at first
+    // boot.  Reject anything that doesn't look like a real auth key.
+    if (!verifyAuthKey(result.secret, /*strict=*/false)) {
+        qWarning() << "Connect: API returned a secret that does not match the "
+                      "expected auth-key format; refusing to use it";
+        out.insert(QStringLiteral("error"),
+                   tr("Raspberry Pi Connect returned an unexpected response."));
+        return out;
+    }
+    qDebug() << "Connect: minted auth key id=" << result.id;
+    // Stash the secret directly in _piConnectToken (and emit the
+    // received signal so QML reflects the new token) instead of
+    // returning it to QML — keeps the secret off the QML stack and
+    // lets discardOrgMintedConnectToken() recognise it later.
+    _piConnectToken = result.secret;
+    _piConnectTokenIsOrgMinted = true;
+    emit connectTokenReceived(result.secret);
+    out.insert(QStringLiteral("ok"), true);
+    return out;
 }
 
 // Debug options implementation (secret menu: Cmd+Option+S on macOS, Ctrl+Alt+S on others)
@@ -4796,8 +4940,11 @@ void ImageWriter::overwriteConnectToken(const QString &token)
 {
     // Ephemeral session-only Connect token (never persisted)
     _piConnectToken = token;
+    // User-supplied (typed / pasted / browser-callback) — clear the
+    // org-minted bit so discardOrgMintedConnectToken() leaves it alone.
+    _piConnectTokenIsOrgMinted = false;
     emit connectTokenReceived(token);
-    
+
     // Bring the window to the foreground on Windows when token is received
     bringWindowToForeground();
 }
@@ -4810,6 +4957,17 @@ QString ImageWriter::getRuntimeConnectToken() const
 void ImageWriter::clearConnectToken()
 {
     _piConnectToken.clear();
+    _piConnectTokenIsOrgMinted = false;
+    emit connectTokenCleared();
+}
+
+void ImageWriter::discardOrgMintedConnectToken()
+{
+    if (!_piConnectTokenIsOrgMinted)
+        return;
+    qDebug() << "Connect: discarding org-minted auth key (storage / OS changed)";
+    _piConnectToken.clear();
+    _piConnectTokenIsOrgMinted = false;
     emit connectTokenCleared();
 }
 
