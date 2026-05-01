@@ -36,6 +36,7 @@ BaseDialog {
         chkEject.naturalWidth,
         chkTelemetry.naturalWidth,
         chkDisableWarnings.naturalWidth,
+        chkConnectOrg.naturalWidth,
         editRepoButton.naturalWidth,
         clearSettingsButton.naturalWidth
     ) + Style.cardPadding * 4  // Double padding: contentLayout + optionsLayout margins
@@ -59,6 +60,7 @@ BaseDialog {
             // Only include secure boot key button if visible
             if (secureBootKeyButton.visible)
                 items.push(secureBootKeyButton.focusItem)
+            items.push(chkConnectOrg.focusItem)
             items.push(clearSettingsButton.focusItem)
             return items
         }, 1)
@@ -221,6 +223,18 @@ BaseDialog {
                 }
             }
 
+            ImOptionPill {
+                id: chkConnectOrg
+                text: qsTr("Raspberry Pi Connect for Organisations")
+                accessibleDescription: qsTr("Enable the organisation-level Raspberry Pi Connect registration flow. When active, the Connect wizard step collects an organisation API key and registers each provisioned device with Connect.")
+                helpLabel: imageWriter.isEmbeddedMode() ? "" : qsTr("What is this?")
+                helpUrl: imageWriter.isEmbeddedMode() ? "" : "https://www.raspberrypi.com/software/connect/"
+                Layout.fillWidth: true
+                Component.onCompleted: {
+                    focusItem.activeFocusOnTab = true
+                }
+            }
+
             ImOptionButton {
                 id: clearSettingsButton
                 text: qsTr("Saved Customisation")
@@ -358,6 +372,11 @@ BaseDialog {
         if (keyPath) {
             rsaKeyPath.text = keyPath;
         }
+        // Raspberry Pi Connect for Organisations is a persisted
+        // feature flag.  The API key itself lives in the wizard's
+        // Connect step (session-only) so it is never written to
+        // disk.
+        chkConnectOrg.checked = imageWriter.getBoolSetting("connect_org_enabled");
 
         initialized = true;
         // Clear initialization flag
@@ -377,6 +396,10 @@ BaseDialog {
         imageWriter.setSetting("eject", chkEject.checked);
         imageWriter.setSetting("telemetry", chkTelemetry.checked);
         imageWriter.setSetting("secureboot_rsa_key", rsaKeyPath.text);
+        // Feature flag only — the stored organisation API key is
+        // kept across toggles.  Use the Clear action on the Connect
+        // wizard step to remove the saved key.
+        imageWriter.setSetting("connect_org_enabled", chkConnectOrg.checked);
         // Do not persist disable_warnings; set ephemeral flag only
         if (popup.wizardContainer)
             popup.wizardContainer.disableWarnings = chkDisableWarnings.checked;

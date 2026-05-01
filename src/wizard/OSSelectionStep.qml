@@ -163,6 +163,10 @@ WizardStepBase {
         function onFileSelected(fileUrl) {
             // Ensure ImageWriter src is set to the chosen file explicitly
             imageWriter.setSrc(fileUrl)
+            // OS swapped — drop any stale org-minted auth key so it
+            // doesn't end up baked into the new image.
+            if (typeof imageWriter.discardOrgMintedConnectToken === "function")
+                imageWriter.discardOrgMintedConnectToken()
             // Update selected OS name to the chosen file name
             root.wizardContainer.selectedOsName = imageWriter.srcFileName()
             root.wizardContainer.customizationSupported = imageWriter.imageSupportsCustomization()
@@ -751,6 +755,11 @@ WizardStepBase {
                     delete root.wizardContainer.customizationSettings.piConnectEnabled
                     root.wizardContainer.piConnectEnabled = false
                 }
+                // Drop any auth key minted for the previously-selected
+                // OS — leaving a stale org credential bound to a fresh
+                // image is a leak we'd rather not ship.
+                if (typeof imageWriter.discardOrgMintedConnectToken === "function")
+                    imageWriter.discardOrgMintedConnectToken()
                 if (!root.wizardContainer.secureBootAvailable) {
                     delete root.wizardContainer.customizationSettings.secureBootEnabled
                     root.wizardContainer.secureBootEnabled = false

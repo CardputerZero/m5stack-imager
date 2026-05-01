@@ -71,6 +71,18 @@ Item {
     property bool piConnectEnabled: false
     // Whether selected OS supports Raspberry Raspberry Pi Connect customization
     property bool piConnectAvailable: false
+    // Whether the current write target is a fastboot storage device.
+    // Set by StorageSelectionStep on selection; consumed by the
+    // Pi Connect customisation step to choose between device-identity
+    // registration (fastboot) and auth-key minting (everything else).
+    property bool targetIsFastboot: false
+
+    // Raspberry Pi Connect for Organisations — session-only credentials.
+    // Held in the wizard container (never persisted) so they survive
+    // step navigation within a session.  Copied into ImageWriter on
+    // Next so they are available to the fastboot flash thread.
+    property string connectOrgApiKey: ""
+    property string connectOrgDescription: ""
     // Whether selected OS supports Secure Boot signing
     property bool secureBootAvailable: false
     // Whether selected OS supports passwordless sudo configuration
@@ -1550,6 +1562,7 @@ Item {
         sshEnabled = false
         piConnectEnabled = false
         piConnectAvailable = false
+        targetIsFastboot = false
 
         ccRpiAvailable = false
         ifI2cEnabled = false

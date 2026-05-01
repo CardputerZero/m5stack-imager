@@ -507,6 +507,17 @@ WizardStepBase {
         }
         selectedDeviceName = dstitem.description || dstitem.device
         root.wizardContainer.selectedStorageName = dstitem.description || dstitem.device
+        // Drives the org-mode branch in the Pi Connect customisation step
+        // (device-identity registration vs. auth-key minting).  rpiboot
+        // bootstraps into fastboot before the flash, so it counts as
+        // fastboot for this purpose.
+        root.wizardContainer.targetIsFastboot =
+            dstitem.isFastbootStorage === true || dstitem.isRpiboot === true
+        // Drop any auth key we minted for a previous target choice.
+        // No-op on first selection or if the runtime token came from
+        // the user-token flow.
+        if (typeof imageWriter.discardOrgMintedConnectToken === "function")
+            imageWriter.discardOrgMintedConnectToken()
 
         // Do not auto-advance; enable Next
         root.nextButtonEnabled = true
@@ -668,6 +679,9 @@ WizardStepBase {
             root.imageWriter.setDst(systemDriveConfirm.device, systemDriveConfirm.deviceSize)
             root.selectedDeviceName = systemDriveConfirm.driveName || systemDriveConfirm.device
             root.wizardContainer.selectedStorageName = systemDriveConfirm.driveName || systemDriveConfirm.device
+            root.wizardContainer.targetIsFastboot = false
+            if (typeof root.imageWriter.discardOrgMintedConnectToken === "function")
+                root.imageWriter.discardOrgMintedConnectToken()
             // Re-enable filtering after selection via confirmation path
             filterSystemDrives.checked = true
             // updateStorageStatus will be called via onCheckedChanged
