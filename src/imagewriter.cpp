@@ -729,8 +729,30 @@ void ImageWriter::onRpibootFastbootReady(const QString &fastbootId)
         _rpibootThread = nullptr;
     }
 
+    // Resolve cache before starting the flash thread.  The regular
+    // (non-fastboot) write path at startWrite() does this — if a cached
+    // image exists and has been background-verified, it substitutes a
+    // file:// URL for _src so libcurl reads off disk instead of going to
+    // the network.  Without the same logic here, fastboot writes always
+    // hit the network even when the OS image is fully cached locally,
+    // which is what produced the "Recv failure: Connection reset by peer"
+    // we just saw despite the user reporting a cached image.
+    QUrl flashSrc = _src;
+    if (_cacheManager && !_expectedHash.isEmpty() &&
+        _cacheManager->hasPotentialCache(_expectedHash)) {
+        auto cacheStatus = _cacheManager->getCacheStatus();
+        if (cacheStatus.verificationComplete && cacheStatus.isValid) {
+            qDebug() << "FastbootFlashThread: using verified cache file"
+                     << cacheStatus.cacheFileName;
+            flashSrc = QUrl::fromLocalFile(cacheStatus.cacheFileName);
+        } else {
+            qDebug() << "FastbootFlashThread: cached file present but not yet"
+                        " verified — falling back to network download";
+        }
+    }
+
     // Start FastbootFlashThread
-    _fastbootFlashThread = new FastbootFlashThread(fastbootId, QStringLiteral("mmcblk0"), _src, _downloadLen, _extrLen, _expectedHash, this);
+    _fastbootFlashThread = new FastbootFlashThread(fastbootId, QStringLiteral("mmcblk0"), flashSrc, _downloadLen, _extrLen, _expectedHash, this);
     _fastbootFlashThread->setImageCustomisation(_config, _cmdline, _firstrun, _cloudinit, _cloudinitNetwork, _initFormat);
     if (!_bmapUrl.isEmpty())
         _fastbootFlashThread->setBmapUrl(QUrl(_bmapUrl));
