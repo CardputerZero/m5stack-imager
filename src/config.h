@@ -8,7 +8,10 @@
 
 
 /* Repository URL */
-#define OSLIST_URL                              "https://downloads.raspberrypi.com/os_list_imagingutility_v4.json"
+#ifndef M5STACK_IMAGER_DEFAULT_REPO_URL
+#define M5STACK_IMAGER_DEFAULT_REPO_URL         "qrc:/m5stack/os-list.json"
+#endif
+#define OSLIST_URL                              M5STACK_IMAGER_DEFAULT_REPO_URL
 
 /* Custom repository manifest file extension (without leading dot) */
 #define MANIFEST_EXTENSION                      "rpi-imager-manifest"
@@ -19,8 +22,10 @@
 /* Time synchronization URL (only used on linuxfb QPA platform, URL must be HTTP) */
 #define TIME_URL                                "http://downloads.raspberrypi.com/"
 
-/* Phone home the name of images downloaded for image popularity ranking */
-#define TELEMETRY_URL                           "https://rpi-imager-stats.raspberrypi.com/downloads"
+/* Phone home the name of images downloaded for image popularity ranking.
+ * Disabled by default for the M5Stack fork until an M5Stack endpoint exists.
+ */
+#define TELEMETRY_URL                           ""
 
 /* Hash algorithm for verifying (uncompressed image) checksum */
 #define OSLIST_HASH_ALGORITHM                   QCryptographicHash::Sha256

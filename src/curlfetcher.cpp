@@ -9,6 +9,7 @@
 #include <QRunnable>
 #include <QPointer>
 #include <QDebug>
+#include <QFile>
 #include <curl/curl.h>
 #include <cstring>
 
@@ -193,10 +194,36 @@ CurlFetcher::~CurlFetcher() = default;
 
 void CurlFetcher::fetch(const QUrl &url)
 {
+    const QString scheme = url.scheme().toLower();
+
+    if (scheme == QLatin1String("qrc")) {
+        const QString resourcePath = QStringLiteral(":") + url.path();
+        QFile file(resourcePath);
+        if (!file.open(QIODevice::ReadOnly)) {
+            qWarning() << "CurlFetcher: failed to open qrc resource:" << resourcePath << file.errorString();
+            QMetaObject::invokeMethod(this, "onFetchComplete",
+                                      Qt::QueuedConnection,
+                                      Q_ARG(QByteArray, QByteArray()),
+                                      Q_ARG(QString, QStringLiteral("Failed to open embedded repository")),
+                                      Q_ARG(QString, QString()),
+                                      Q_ARG(QString, QString()));
+            return;
+        }
+
+        const QByteArray data = file.readAll();
+        qDebug() << "CurlFetcher: fetched" << data.size() << "bytes from qrc resource" << resourcePath;
+        QMetaObject::invokeMethod(this, "onFetchComplete",
+                                  Qt::QueuedConnection,
+                                  Q_ARG(QByteArray, data),
+                                  Q_ARG(QString, QString()),
+                                  Q_ARG(QString, QString()),
+                                  Q_ARG(QString, QString()));
+        return;
+    }
+
     // Security: Only allow HTTP/HTTPS/file schemes.
     // file:// is needed for local repositories.
     // SSRF via redirect (http->file) is blocked by CURLOPT_REDIR_PROTOCOLS.
-    const QString scheme = url.scheme().toLower();
     if (scheme != QLatin1String("http") && scheme != QLatin1String("https") 
         && scheme != QLatin1String("file")) {
         qWarning() << "CurlFetcher: Rejecting unsupported URL scheme:" << scheme;

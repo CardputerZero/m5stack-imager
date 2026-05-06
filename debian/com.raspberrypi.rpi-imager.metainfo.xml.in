@@ -3,8 +3,8 @@
   <id>com.raspberrypi.rpi-imager</id>
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>Apache-2.0</project_license>
-  <name>Raspberry Pi Imager</name>
-  <summary>Raspberry Pi Imaging utility</summary>
+  <name>M5Stack Imager</name>
+  <summary>M5Stack Raspberry Pi device imaging utility</summary>
   <description>
     <p>
       Raspberry Pi Imager downloads a .JSON file from the Raspberry Pi
@@ -61,4 +61,3 @@
     <content_attribute id="social-info">moderate</content_attribute>
   </content_rating>
 </component>
-

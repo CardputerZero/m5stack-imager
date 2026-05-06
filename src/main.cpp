@@ -139,10 +139,10 @@ int main(int argc, char *argv[])
             g_logFile = fopen(logPath, "a");
             if (g_logFile) {
 #ifdef Q_OS_UNIX
-                fprintf(g_logFile, "\n=== Raspberry Pi Imager started (PID %d, EUID %d) ===\n",
+                fprintf(g_logFile, "\n=== M5Stack Imager started (PID %d, EUID %d) ===\n",
                         getpid(), geteuid());
 #else
-                fprintf(g_logFile, "\n=== Raspberry Pi Imager started ===\n");
+                fprintf(g_logFile, "\n=== M5Stack Imager started ===\n");
 #endif
                 fflush(g_logFile);
                 qInstallMessageHandler(fileLogHandler);
@@ -223,9 +223,9 @@ int main(int argc, char *argv[])
 
     QGuiApplication app(argc, argv);
 
-    app.setOrganizationName("Raspberry Pi");
-    app.setOrganizationDomain("raspberrypi.com");
-    app.setApplicationName("Raspberry Pi Imager");
+    app.setOrganizationName("M5Stack");
+    app.setOrganizationDomain("m5stack.com");
+    app.setApplicationName("M5Stack Imager");
     app.setApplicationVersion(ImageWriter::staticVersion());
     app.setWindowIcon(QIcon(":/icons/rpi-imager.ico"));
 
@@ -328,7 +328,7 @@ int main(int argc, char *argv[])
     int cliRefreshJitter = -1;
 
     QCommandLineParser parser;
-    parser.setApplicationDescription("Raspberry Pi Imager GUI");
+    parser.setApplicationDescription("M5Stack Imager GUI");
     parser.addHelpOption();
     parser.addVersionOption();
     parser.addOptions({

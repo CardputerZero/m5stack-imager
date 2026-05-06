@@ -1,0 +1,119 @@
+{
+  "imager": {
+    "latest_version": "0.1.0",
+    "url": "https://m5stack.com",
+    "devices": [
+      {
+        "name": "CM4Stack",
+        "description": "M5Stack host based on Raspberry Pi Compute Module 4.",
+        "tags": [
+          "m5-cm4stack",
+          "pi4-64bit",
+          "pi4-32bit"
+        ],
+        "default": true,
+        "matching_type": "exclusive",
+        "architecture": "armv8",
+        "capabilities": [
+          "i2c",
+          "spi",
+          "serial",
+          "usb_otg"
+        ]
+      },
+      {
+        "name": "CardputerZero",
+        "description": "M5Stack pocket Raspberry Pi computer. Update tags after final hardware release.",
+        "tags": [
+          "m5-cardputerzero",
+          "pi3-64bit",
+          "pi3-32bit"
+        ],
+        "matching_type": "exclusive",
+        "architecture": "armv8",
+        "capabilities": [
+          "i2c",
+          "spi",
+          "serial",
+          "usb_otg"
+        ]
+      },
+      {
+        "name": "No filtering",
+        "description": "Show every possible image.",
+        "tags": [],
+        "matching_type": "inclusive",
+        "capabilities": []
+      }
+    ]
+  },
+  "os_list": [
+    {
+      "name": "CM4StackOS Canary (32-bit)",
+      "description": "M5Stack CM4Stack OS based on Raspberry Pi OS Bullseye armhf.",
+      "icon": "https://m5stack.oss-cn-shenzhen.aliyuncs.com/resource/linux/m5stack-imager/icons/cm4stack.png",
+      "url": "https://m5stack.oss-cn-shenzhen.aliyuncs.com/cm4stack/cm4stack_images/canary/2023-03-08-CM4StackOS-canary-2023-02-21-raspios-bullseye-armhf.gz",
+      "extract_size": 4391436288,
+      "extract_sha256": "6762246a972264dea9f94156957a6bd88461c8027f9792e96d20f14eb6ae4570",
+      "image_download_size": 1528259196,
+      "image_download_sha256": "200a7f319d5eff8cd3daea9452cc0e75b8c4de998d6cf9be482d1e1e9634a0ee",
+      "release_date": "2023-03-08",
+      "init_format": "systemd",
+      "devices": [
+        "m5-cm4stack",
+        "pi4-32bit"
+      ],
+      "architecture": "armhf",
+      "capabilities": [
+        "i2c",
+        "spi",
+        "serial",
+        "usb_otg"
+      ]
+    },
+    {
+      "name": "CM4StackOS Bullseye (64-bit)",
+      "description": "M5Stack CM4Stack OS based on Raspberry Pi OS Bullseye arm64.",
+      "icon": "https://m5stack.oss-cn-shenzhen.aliyuncs.com/resource/linux/m5stack-imager/icons/cm4stack.png",
+      "url": "https://m5stack.oss-cn-shenzhen.aliyuncs.com/cm4stack/cm4stack_images/canary/2023-02-21-CM4StackOS-raspberry-bullseye-arm64.7z",
+      "extract_size": 4395630592,
+      "extract_sha256": "ab80ef6e0964113d22e0358e16a16265e28648e4331d18b218e0883edc7f0430",
+      "image_download_size": 924957856,
+      "image_download_sha256": "7a9716a82e5c4bbff1375e53c5c35c9374a64f3047be7c57a28dbeca2cb91e78",
+      "release_date": "2023-02-21",
+      "init_format": "systemd",
+      "devices": [
+        "m5-cm4stack",
+        "pi4-64bit"
+      ],
+      "architecture": "armv8",
+      "capabilities": [
+        "i2c",
+        "spi",
+        "serial",
+        "usb_otg"
+      ]
+    },
+    {
+      "name": "Cardputer Zero OS",
+      "description": "M5Stack Cardputer Zero Linux image.",
+      "url": "https://m5stack.oss-cn-shenzhen.aliyuncs.com/resource/linux/cp0/raspi-shrink.img.zip",
+      "extract_size": 8880091136,
+      "extract_sha256": "2a0f2f1cf565d6e793a77e7a21a29cbbc9cc98e3afe156f02f01e5a70c7129f3",
+      "image_download_size": 2439984258,
+      "image_download_sha256": "14b76deab0dd882b6543466e1b1f92d4655cfec792252f07cb7f579bddfe4af7",
+      "release_date": "2026-04-30",
+      "init_format": "systemd",
+      "devices": [
+        "m5-cardputerzero"
+      ],
+      "architecture": "armhf",
+      "capabilities": [
+        "i2c",
+        "spi",
+        "serial",
+        "usb_otg"
+      ]
+    }
+  ]
+}

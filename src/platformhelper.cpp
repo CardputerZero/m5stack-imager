@@ -24,7 +24,7 @@ bool PlatformHelper::isScrollInverted(bool qtInvertedFlag) const
 qreal PlatformHelper::textScaleFactor() const
 {
     // Check for user override in settings first
-    QSettings settings("Raspberry Pi", "Raspberry Pi Imager");
+    QSettings settings("M5Stack", "M5Stack Imager");
     QVariant override = settings.value("textScaleFactor");
     if (override.isValid()) {
         bool ok = false;

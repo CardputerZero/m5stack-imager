@@ -7,6 +7,7 @@
         <file>keymap-layouts.txt</file>
         <file>capital-cities.txt</file>
         <file>sounds/chime.wav</file>
+        <file alias="m5stack/os-list.json">../m5stack/os-list.cm4stack-cardputerzero.example.json</file>
     </qresource>
 
     <!-- Resources used by QML: -->

@@ -1,58 +1,108 @@
-# Raspberry Pi Imager
+# M5Stack Imager
 
-![](./screenshot.png)
+M5Stack Imager is an M5Stack-oriented fork of Raspberry Pi Imager for writing
+operating-system images to M5Stack Raspberry Pi devices such as CM4Stack and
+CardputerZero.
 
-Raspberry Pi Imaging Utility
+This repository currently keeps the upstream Qt/C++ writing engine, removable
+drive handling, checksum verification, OS customisation flow, and Compute
+Module USB boot support from Raspberry Pi Imager. The first M5Stack-specific
+layer is the default branding, telemetry policy, and OS repository structure.
 
-- To install on Raspberry Pi OS, use `sudo apt update && sudo apt install rpi-imager`.
-- Download the latest version for Windows, macOS and Ubuntu from the [Raspberry Pi downloads page](https://www.raspberrypi.com/software/).
+## Upstream
 
-## How to install and use Raspberry Pi Imager
+The upstream project is `raspberrypi/rpi-imager` and remains available as the
+`upstream` git remote:
 
-Please see our [official documentation](https://www.raspberrypi.com/documentation/computers/getting-started.html#raspberry-pi-imager).
+```sh
+git remote -v
+git fetch upstream
+```
 
-## Development
+The original upstream README is preserved in `README.upstream.md`. Keep
+`license.txt` and upstream copyright notices intact when distributing builds.
 
-To build Raspberry Pi Imager from source-code, see our separate instructions in [CONTRIBUTING.md](./CONTRIBUTING.md)
+## M5Stack Repository Manifest
 
-## Other notes
+The app reads an OS list JSON manifest. The default is configured in `src/config.h`
+through `M5STACK_IMAGER_DEFAULT_REPO_URL`:
 
-### Custom repository
+```text
+qrc:/m5stack/os-list.json
+```
 
-If the application is started with "--repo [your own URL]" it will use a custom image repository.
-So can simply create another 'start menu shortcut' to the application with that parameter to use the application with your own images.
+That default embeds the checked-in example manifest at
+`m5stack/os-list.cm4stack-cardputerzero.example.json`, so early test builds do
+not depend on a published CDN endpoint. When the production manifest endpoint is
+ready, either change the CMake default or build with:
 
-### Anonymous metrics (telemetry)
+```sh
+cmake -S src -B build \
+  -DM5STACK_IMAGER_DEFAULT_REPO_URL=https://m5stack.oss-cn-shenzhen.aliyuncs.com/resource/linux/m5stack-imager/os_list_v1.json
+```
 
-#### Why and what
+You can also test a local or remote manifest at runtime:
 
-In order to understand usage of the application (e.g. uptake of Raspberry Pi Imager versions and which images and operating systems are most popular), Raspberry Pi Imager collects anonymous metrics (telemetry) by default. These metrics are used to prioritise and justify work on the Raspberry Pi Imager, and contain the following information:
+```sh
+rpi-imager --repo m5stack/os-list.cm4stack-cardputerzero.example.json
+```
 
-- The URL of the OS you have selected
-- The category of the OS you have selected
-- The observed name of the OS you have selected
-- The version of Raspberry Pi Imager
-- A flag to say if Raspberry Pi Imager is being used on the Desktop or as part of the Network Installer
-- The host operating system version (e.g. Windows 11)
-- The host operating system architecture (e.g. arm64, x86_64)
-- The host operating system locale name (e.g. en-GB)
+That example exposes CM4Stack and CardputerZero in the device picker and uses
+the current CM4StackOS canary images plus Raspberry Pi OS image URLs as
+known-good starter entries. Replace the placeholder icon URL and add
+CardputerZero images once release images and SHA256 values are available.
 
-If the Raspberry Pi Imager is being run a part of the Network Installer, Imager will also collect the revision of Raspberry Pi it is running on.
+Use the normal M5Stack OSS path style for production images, for example:
 
-#### Where is it stored
+```text
+https://m5stack.oss-cn-shenzhen.aliyuncs.com/resource/linux/cp0/raspi-shrink.img.zip
+```
 
-This web service is hosted by [Heroku](https://www.heroku.com) and only stores an incrementing counter using a [Redis Sorted Set](https://redis.io/topics/data-types#sorted-sets) for each URL, operating system name and category per day in the `eu-west-1` region and does not associate any personal data with those counts. This allows us to query the number of downloads over time and nothing else.
+## Build
 
-The last 1,500 requests to the service are logged for one week before expiring as this is the [minimum log retention period for Heroku](https://devcenter.heroku.com/articles/logging#log-history-limits).
+Use the upstream build flow for now:
 
-#### Viewing the data
+```sh
+cd src
+cmake -S . -B ../build -DCMAKE_BUILD_TYPE=RelWithDebInfo
+cmake --build ../build
+```
 
-As the data is stored in aggregate form, only aggregate data is available to any viewer. See what we see at: [rpi-imager-stats](https://rpi-imager-stats.raspberrypi.com)
+Linux AppImage and macOS DMG flows are still the upstream flows. The Windows
+installer can be built by GitHub Actions from this repository.
 
-#### Opting out
+## GitHub Actions and Releases
 
-The most convenient way to opt-out of anonymous metric collection is via the Raspberry Pi Imager UI:
+`.github/workflows/windows-release.yml` builds an unsigned Windows x64 package
+on `push`, `pull_request`, and manual `workflow_dispatch`.
 
-- Select "App Options"
-- Untoggle "Enable anonymous statistics (telemetry) collection"
-- Press "Save"
+The workflow produces:
+
+- `M5Stack-Imager-<version>-windows-x64-installer.exe`
+- `M5Stack-Imager-<version>-windows-x64-portable.zip`
+
+To publish a GitHub Release, push a version tag:
+
+```sh
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+The release job creates or updates the matching GitHub Release and uploads the
+Windows installer plus portable zip. Builds are unsigned until M5Stack code
+signing credentials are wired into the workflow, so Windows may show the normal
+SmartScreen warning.
+
+Packaging identifiers such as `com.raspberrypi.rpi-imager`, `rpi-imager`, and
+`.rpi-imager-manifest` still need a dedicated M5Stack rename pass before public
+release.
+
+## Immediate TODO
+
+- Publish the production M5Stack OS manifest and replace the placeholder URL if
+  the CDN path changes.
+- Add official CM4Stack and CardputerZero icons to the manifest.
+- Decide whether M5Stack wants its own anonymous metrics endpoint; telemetry is
+  disabled by default in this fork.
+- Add M5Stack-specific first boot customisation only after the target image
+  layout is fixed.

@@ -46,7 +46,7 @@ CurlNetworkConfig& CurlNetworkConfig::instance()
 CurlNetworkConfig::CurlNetworkConfig()
 {
     // Set default user agent
-    _userAgent = "Mozilla/5.0 rpi-imager/" IMAGER_VERSION_STR;
+    _userAgent = "Mozilla/5.0 m5stack-imager/" IMAGER_VERSION_STR;
     
     // Create dedicated network thread pool
     _networkPool = new QThreadPool();

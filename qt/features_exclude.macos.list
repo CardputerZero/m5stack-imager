@@ -41,7 +41,6 @@ systemsemaphore
 systemtrayicon
 tabletevent
 testlib
-texthtmlparser
 textmarkdownreader
 textmarkdownwriter
 textodfwriter

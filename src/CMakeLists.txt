@@ -5,9 +5,13 @@ include(cmake/GeneratedResource.cmake)
 
 cmake_minimum_required(VERSION 3.22)
 OPTION (ENABLE_CHECK_VERSION "Check for version updates" ON)
-OPTION (ENABLE_TELEMETRY "Enable sending telemetry" ON)
+OPTION (ENABLE_TELEMETRY "Enable sending telemetry" OFF)
 OPTION (BUILD_EMBEDDED "Build for Embedded Imager" OFF)
 OPTION (BUILD_CLI_ONLY "Build CLI-only version without GUI components" OFF)
+
+set(M5STACK_IMAGER_DEFAULT_REPO_URL
+    "qrc:/m5stack/os-list.json"
+    CACHE STRING "Default OS list URL for M5Stack Imager")
 
 # We use FetchContent_Populate() instead of FetchContent_MakeAvailable() to allow EXCLUDE_FROM_ALL
 # This prevents the dependencies from being built by default, which is our desired behavior
@@ -400,6 +404,8 @@ endif()
 
 # Ensure version header is generated before compiling
 add_dependencies(${PROJECT_NAME} generate_version)
+target_compile_definitions(${PROJECT_NAME}
+    PRIVATE M5STACK_IMAGER_DEFAULT_REPO_URL="${M5STACK_IMAGER_DEFAULT_REPO_URL}")
 
 # Set output name based on build type
 if(BUILD_CLI_ONLY)

@@ -1,0 +1,115 @@
+name: Windows Build and Release
+
+on:
+  push:
+    branches:
+      - main
+      - m5stack-dev
+    tags:
+      - "v*"
+      - "m5stack-v*"
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  BUILD_TYPE: MinSizeRel
+  BUILD_DIR: build/windows
+  QT_ROOT: C:/msys64/ucrt64
+
+jobs:
+  windows:
+    name: Windows x64
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Inno Setup
+        shell: pwsh
+        run: choco install innosetup --no-progress -y
+
+      - name: Install MSYS2 Qt toolchain
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: UCRT64
+          update: true
+          install: >-
+            git
+            mingw-w64-ucrt-x86_64-toolchain
+            mingw-w64-ucrt-x86_64-cmake
+            mingw-w64-ucrt-x86_64-ninja
+            mingw-w64-ucrt-x86_64-qt6-base
+            mingw-w64-ucrt-x86_64-qt6-declarative
+            mingw-w64-ucrt-x86_64-qt6-svg
+            mingw-w64-ucrt-x86_64-qt6-tools
+
+      - name: Configure
+        shell: msys2 {0}
+        run: |
+          cmake -S src -B "$BUILD_DIR" -G Ninja \
+            -DCMAKE_BUILD_TYPE="$BUILD_TYPE" \
+            -DQt6_ROOT="$QT_ROOT" \
+            -DMINGW64_ROOT="$QT_ROOT" \
+            -DENABLE_INNO_INSTALLER=ON \
+            -DENABLE_CHECK_VERSION=OFF \
+            -DENABLE_TELEMETRY=OFF \
+            -DIMAGER_SIGNED_APP=OFF
+
+      - name: Build installer
+        shell: msys2 {0}
+        run: cmake --build "$BUILD_DIR" --target inno_installer --parallel 2
+
+      - name: Collect artifacts
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          New-Item -ItemType Directory -Force dist | Out-Null
+
+          if ($env:GITHUB_REF_TYPE -eq "tag") {
+            $version = $env:GITHUB_REF_NAME
+          } else {
+            $version = (git describe --tags --dirty --always)
+          }
+          $version = $version -replace '^v', ''
+
+          $installer = Get-ChildItem "$env:GITHUB_WORKSPACE\$env:BUILD_DIR\installer" -Filter "*.exe" |
+            Sort-Object LastWriteTime -Descending |
+            Select-Object -First 1
+          if (-not $installer) {
+            throw "No Windows installer was produced"
+          }
+
+          Copy-Item $installer.FullName "dist\M5Stack-Imager-$version-windows-x64-installer.exe"
+          Compress-Archive -Path "$env:GITHUB_WORKSPACE\$env:BUILD_DIR\deploy\*" `
+            -DestinationPath "dist\M5Stack-Imager-$version-windows-x64-portable.zip" `
+            -Force
+          Get-ChildItem dist
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: m5stack-imager-windows-x64
+          path: dist/*
+          if-no-files-found: error
+
+      - name: Publish GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $ErrorActionPreference = "Stop"
+          $tag = "${{ github.ref_name }}"
+          gh release view $tag *> $null
+          if ($LASTEXITCODE -ne 0) {
+            gh release create $tag `
+              --title "M5Stack Imager $tag" `
+              --notes "Automated unsigned Windows build for $tag."
+          }
+          gh release upload $tag dist/* --clobber

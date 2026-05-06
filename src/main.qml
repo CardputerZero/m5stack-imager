@@ -39,7 +39,7 @@ ApplicationWindow {
     property bool isOffline: imageWriter.isOsListUnavailable
     
     title: {
-        var baseTitle = qsTr("Raspberry Pi Imager %1").arg(imageWriter.constantVersion())
+        var baseTitle = qsTr("M5Stack Imager %1").arg(imageWriter.constantVersion())
         if (isOffline) {
             baseTitle += " — " + qsTr("Offline")
         }
