@@ -9,6 +9,10 @@ drive handling, checksum verification, OS customisation flow, and Compute
 Module USB boot support from Raspberry Pi Imager. The first M5Stack-specific
 layer is the default branding, telemetry policy, and OS repository structure.
 
+## Preview
+
+![M5Stack Imager screenshot](screenshot_m5stack.png)
+
 ## Upstream
 
 The upstream project is `raspberrypi/rpi-imager` and remains available as the
