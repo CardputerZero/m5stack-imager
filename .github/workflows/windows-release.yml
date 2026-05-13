@@ -17,7 +17,7 @@ permissions:
 env:
   BUILD_TYPE: MinSizeRel
   BUILD_DIR: build/windows
-  QT_ROOT: C:/msys64/ucrt64
+  QT_ROOT: D:/a/_temp/msys64/ucrt64
 
 jobs:
   windows:
@@ -38,7 +38,7 @@ jobs:
         uses: msys2/setup-msys2@v2
         with:
           msystem: UCRT64
-          update: false
+          update: true
           install: >-
             git
             mingw-w64-ucrt-x86_64-toolchain
