@@ -1,0 +1,185 @@
+# Reference workflow for CardputerZero/pi-gen repository
+# Replaces the existing publish-latest-stable.yml
+# Publishes stable image to OSS AND generates os-list.json
+
+name: Publish Latest Stable to OSS
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag to publish (leave empty for latest prerelease)'
+        required: false
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    name: Publish stable image and os-list.json
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Determine release tag
+        id: release
+        run: |
+          if [[ -n "${{ inputs.tag }}" ]]; then
+            TAG="${{ inputs.tag }}"
+          else
+            # Get latest prerelease (pi-gen creates prereleases)
+            TAG=$(gh api repos/${{ github.repository }}/releases \
+              --jq '[.[] | select(.prerelease)] | sort_by(.created_at) | last | .tag_name')
+            if [[ -z "$TAG" ]]; then
+              echo "ERROR: No prerelease found"
+              exit 1
+            fi
+          fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "Publishing release: $TAG"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Download image from release
+        id: download
+        run: |
+          TAG="${{ steps.release.outputs.tag }}"
+          ASSET_NAME=$(gh api "repos/${{ github.repository }}/releases/tags/${TAG}" \
+            --jq '.assets[] | select(.name | endswith(".img.xz")) | .name')
+          ASSET_URL=$(gh api "repos/${{ github.repository }}/releases/tags/${TAG}" \
+            --jq '.assets[] | select(.name | endswith(".img.xz")) | .url')
+          if [[ -z "$ASSET_URL" ]]; then
+            echo "ERROR: No .img.xz asset found in release $TAG"
+            exit 1
+          fi
+          echo "Downloading: $ASSET_NAME"
+          gh api "$ASSET_URL" -H "Accept: application/octet-stream" > "$ASSET_NAME"
+          ls -lh "$ASSET_NAME"
+          echo "name=$ASSET_NAME" >> "$GITHUB_OUTPUT"
+          echo "size=$(stat --printf='%s' "$ASSET_NAME")" >> "$GITHUB_OUTPUT"
+          echo "sha256=$(sha256sum "$ASSET_NAME" | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Compute image metadata
+        id: meta
+        run: |
+          ASSET_NAME="${{ steps.download.outputs.name }}"
+
+          # Get compressed size and hash
+          DOWNLOAD_SIZE="${{ steps.download.outputs.size }}"
+          DOWNLOAD_SHA256="${{ steps.download.outputs.sha256 }}"
+
+          # Decompress to get extract size and hash
+          xz -dk "$ASSET_NAME"
+          RAW_NAME="${ASSET_NAME%.xz}"
+          EXTRACT_SIZE=$(stat --printf='%s' "$RAW_NAME")
+          EXTRACT_SHA256=$(sha256sum "$RAW_NAME" | cut -d' ' -f1)
+          rm -f "$RAW_NAME"
+
+          # Extract release date from filename (YYYY-MM-DD prefix)
+          RELEASE_DATE=$(echo "$ASSET_NAME" | grep -oP '^\d{4}-\d{2}-\d{2}' || date +%Y-%m-%d)
+
+          echo "download_size=$DOWNLOAD_SIZE" >> "$GITHUB_OUTPUT"
+          echo "download_sha256=$DOWNLOAD_SHA256" >> "$GITHUB_OUTPUT"
+          echo "extract_size=$EXTRACT_SIZE" >> "$GITHUB_OUTPUT"
+          echo "extract_sha256=$EXTRACT_SHA256" >> "$GITHUB_OUTPUT"
+          echo "release_date=$RELEASE_DATE" >> "$GITHUB_OUTPUT"
+
+      - name: Generate os-list.json
+        run: |
+          cat > os-list.json <<'TEMPLATE'
+          {
+            "imager": {
+              "latest_version": "1.0.0",
+              "url": "https://github.com/CardputerZero/m5stack-imager/releases",
+              "devices": [
+                {
+                  "name": "CM4Stack",
+                  "description": "M5Stack host based on Raspberry Pi Compute Module 4.",
+                  "icon": "https://cardputer-zero-repo.oss-cn-shenzhen.aliyuncs.com/icons/cm4stack.png",
+                  "tags": ["m5-cm4stack", "pi4-64bit", "pi4-32bit"],
+                  "matching_type": "exclusive",
+                  "architecture": "armv8",
+                  "capabilities": ["i2c", "spi", "serial", "usb_otg"]
+                },
+                {
+                  "name": "CardputerZero",
+                  "description": "M5Stack pocket Raspberry Pi Zero 2W computer.",
+                  "icon": "https://cardputer-zero-repo.oss-cn-shenzhen.aliyuncs.com/icons/cardputerzero.png",
+                  "tags": ["m5-cardputerzero", "pi3-64bit", "pi3-32bit"],
+                  "default": true,
+                  "matching_type": "exclusive",
+                  "architecture": "armv8",
+                  "capabilities": ["i2c", "spi", "serial", "usb_otg"]
+                },
+                {
+                  "name": "No filtering",
+                  "description": "Show every possible image (for non-M5Stack devices).",
+                  "tags": [],
+                  "matching_type": "inclusive",
+                  "capabilities": []
+                }
+              ]
+            },
+            "os_list": [
+              {
+                "name": "CardputerZero OS (Trixie arm64)",
+                "description": "Debian Trixie arm64 desktop for CardputerZero.",
+                "icon": "https://cardputer-zero-repo.oss-cn-shenzhen.aliyuncs.com/icons/cardputerzero.png",
+                "url": "https://cardputer-zero-repo.oss-cn-shenzhen.aliyuncs.com/cardputerzero-trixie-arm64-latest.img.xz",
+                "extract_size": __EXTRACT_SIZE__,
+                "extract_sha256": "__EXTRACT_SHA256__",
+                "image_download_size": __DOWNLOAD_SIZE__,
+                "image_download_sha256": "__DOWNLOAD_SHA256__",
+                "release_date": "__RELEASE_DATE__",
+                "init_format": "systemd",
+                "devices": ["m5-cardputerzero", "pi3-64bit"],
+                "architecture": "armv8",
+                "capabilities": ["i2c", "spi", "serial", "usb_otg"]
+              }
+            ]
+          }
+          TEMPLATE
+
+          # Remove leading indentation from heredoc
+          sed -i 's/^          //' os-list.json
+
+          # Fill in computed values
+          sed -i "s/__EXTRACT_SIZE__/${{ steps.meta.outputs.extract_size }}/" os-list.json
+          sed -i "s/__EXTRACT_SHA256__/${{ steps.meta.outputs.extract_sha256 }}/" os-list.json
+          sed -i "s/__DOWNLOAD_SIZE__/${{ steps.meta.outputs.download_size }}/" os-list.json
+          sed -i "s/__DOWNLOAD_SHA256__/${{ steps.meta.outputs.download_sha256 }}/" os-list.json
+          sed -i "s/__RELEASE_DATE__/${{ steps.meta.outputs.release_date }}/" os-list.json
+
+          echo "Generated os-list.json:"
+          cat os-list.json
+          # Validate JSON
+          python3 -m json.tool os-list.json > /dev/null
+
+      - name: Setup ossutil
+        uses: manyuanrong/setup-ossutil@v3.0
+        with:
+          endpoint: oss-cn-shenzhen.aliyuncs.com
+          access-key-id: ${{ secrets.OSS_ACCESS_KEY_ID }}
+          access-key-secret: ${{ secrets.OSS_ACCESS_KEY_SECRET }}
+
+      - name: Upload to OSS
+        run: |
+          ASSET_NAME="${{ steps.download.outputs.name }}"
+
+          # Upload image as latest stable
+          echo "Uploading $ASSET_NAME -> cardputerzero-trixie-arm64-latest.img.xz"
+          ossutil cp -f "$ASSET_NAME" \
+            "oss://cardputer-zero-repo/cardputerzero-trixie-arm64-latest.img.xz"
+
+          # Also keep a dated copy
+          ossutil cp -f "$ASSET_NAME" \
+            "oss://cardputer-zero-repo/images/$ASSET_NAME"
+
+          # Upload os-list.json
+          ossutil cp -f os-list.json \
+            "oss://cardputer-zero-repo/os-list.json" \
+            --meta "Content-Type:application/json"
+
+          echo "✓ Image: https://cardputer-zero-repo.oss-cn-shenzhen.aliyuncs.com/cardputerzero-trixie-arm64-latest.img.xz"
+          echo "✓ OS List: https://cardputer-zero-repo.oss-cn-shenzhen.aliyuncs.com/os-list.json"

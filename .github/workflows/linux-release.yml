@@ -1,0 +1,93 @@
+name: Linux Build and Release
+
+on:
+  push:
+    branches:
+      - main
+      - m5stack-dev
+    tags:
+      - "v*"
+      - "m5stack-v*"
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  BUILD_TYPE: MinSizeRel
+  BUILD_DIR: build/linux
+
+jobs:
+  linux:
+    name: Linux x64
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential cmake ninja-build git \
+            qt6-base-dev qt6-declarative-dev qt6-svg-dev qt6-tools-dev \
+            qt6-l10n-tools qt6-base-dev-tools \
+            libqt6svg6-dev qml6-module-qtquick-controls \
+            qml6-module-qtquick-layouts qml6-module-qtquick-templates \
+            qml6-module-qtquick-window qml6-module-qtqml-workerscript \
+            libgnutls28-dev libidn2-dev libnettle-dev \
+            libcurl4-openssl-dev libssl-dev \
+            libudev-dev libusb-1.0-0-dev \
+            liburing-dev \
+            util-linux
+
+      - name: Configure
+        run: |
+          cmake -S src -B "$BUILD_DIR" -G Ninja \
+            -DCMAKE_BUILD_TYPE="$BUILD_TYPE" \
+            -DCMAKE_INSTALL_PREFIX=/usr \
+            -DENABLE_CHECK_VERSION=OFF \
+            -DENABLE_TELEMETRY=OFF \
+            -DIMAGER_SIGNED_APP=OFF
+
+      - name: Build
+        run: cmake --build "$BUILD_DIR" --parallel $(nproc)
+
+      - name: Collect artifacts
+        run: |
+          mkdir -p dist
+
+          if [ "$GITHUB_REF_TYPE" = "tag" ]; then
+            version="${GITHUB_REF_NAME}"
+          else
+            version="$(git describe --tags --dirty --always)"
+          fi
+          version="${version#v}"
+
+          # Create a portable tarball
+          DESTDIR="$(pwd)/install" cmake --install "$BUILD_DIR"
+          tar -czf "dist/M5Stack-Imager-${version}-linux-x64.tar.gz" -C install .
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: m5stack-imager-linux-x64
+          path: dist/*
+          if-no-files-found: error
+
+      - name: Publish GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="${{ github.ref_name }}"
+          if ! gh release view "$tag" > /dev/null 2>&1; then
+            gh release create "$tag" \
+              --title "M5Stack Imager $tag" \
+              --notes "Automated build for $tag."
+          fi
+          gh release upload "$tag" dist/* --clobber

@@ -10,7 +10,7 @@ OPTION (BUILD_EMBEDDED "Build for Embedded Imager" OFF)
 OPTION (BUILD_CLI_ONLY "Build CLI-only version without GUI components" OFF)
 
 set(M5STACK_IMAGER_DEFAULT_REPO_URL
-    "qrc:/m5stack/os-list.json"
+    "https://cardputer-zero-repo.oss-cn-shenzhen.aliyuncs.com/os-list.json"
     CACHE STRING "Default OS list URL for M5Stack Imager")
 
 # We use FetchContent_Populate() instead of FetchContent_MakeAvailable() to allow EXCLUDE_FROM_ALL

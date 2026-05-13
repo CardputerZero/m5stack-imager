@@ -110,6 +110,6 @@ jobs:
           if ($LASTEXITCODE -ne 0) {
             gh release create $tag `
               --title "M5Stack Imager $tag" `
-              --notes "Automated unsigned Windows build for $tag."
+              --notes "Automated build for $tag."
           }
           gh release upload $tag dist/* --clobber

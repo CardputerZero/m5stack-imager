@@ -1,0 +1,85 @@
+{
+  "imager": {
+    "latest_version": "1.0.0",
+    "url": "https://github.com/CardputerZero/m5stack-imager/releases",
+    "devices": [
+      {
+        "name": "CM4Stack",
+        "description": "M5Stack host based on Raspberry Pi Compute Module 4.",
+        "icon": "https://cardputer-zero-repo.oss-cn-shenzhen.aliyuncs.com/icons/cm4stack.png",
+        "tags": [
+          "m5-cm4stack",
+          "pi4-64bit",
+          "pi4-32bit"
+        ],
+        "matching_type": "exclusive",
+        "architecture": "armv8",
+        "capabilities": [
+          "i2c",
+          "spi",
+          "serial",
+          "usb_otg"
+        ]
+      },
+      {
+        "name": "CardputerZero",
+        "description": "M5Stack pocket Raspberry Pi Zero 2W computer.",
+        "icon": "https://cardputer-zero-repo.oss-cn-shenzhen.aliyuncs.com/icons/cardputerzero.png",
+        "tags": [
+          "m5-cardputerzero",
+          "pi3-64bit",
+          "pi3-32bit"
+        ],
+        "default": true,
+        "matching_type": "exclusive",
+        "architecture": "armv8",
+        "capabilities": [
+          "i2c",
+          "spi",
+          "serial",
+          "usb_otg"
+        ]
+      },
+      {
+        "name": "No filtering",
+        "description": "Show every possible image (for non-M5Stack devices).",
+        "tags": [],
+        "matching_type": "inclusive",
+        "capabilities": []
+      }
+    ]
+  },
+  "os_list": [
+    {
+      "name": "CardputerZero OS (Trixie arm64)",
+      "description": "Debian Trixie arm64 desktop for CardputerZero.",
+      "icon": "https://cardputer-zero-repo.oss-cn-shenzhen.aliyuncs.com/icons/cardputerzero.png",
+      "url": "https://cardputer-zero-repo.oss-cn-shenzhen.aliyuncs.com/cardputerzero-trixie-arm64-latest.img.xz",
+      "extract_size": 0,
+      "extract_sha256": "",
+      "image_download_size": 0,
+      "image_download_sha256": "",
+      "release_date": "2026-01-01",
+      "init_format": "systemd",
+      "devices": [
+        "m5-cardputerzero",
+        "pi3-64bit"
+      ],
+      "architecture": "armv8",
+      "capabilities": [
+        "i2c",
+        "spi",
+        "serial",
+        "usb_otg"
+      ]
+    },
+    {
+      "name": "Raspberry Pi OS",
+      "description": "Official Raspberry Pi OS images",
+      "icon": "https://downloads.raspberrypi.com/raspios_armhf/Raspberry_Pi_OS_(32-bit).png",
+      "subitems_url": "https://downloads.raspberrypi.org/os_list_imagingutility_v4.json",
+      "devices": [],
+      "capabilities": []
+    }
+  ]
+}

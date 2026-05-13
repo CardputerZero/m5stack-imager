@@ -1,0 +1,92 @@
+name: macOS Build and Release
+
+on:
+  push:
+    branches:
+      - main
+      - m5stack-dev
+    tags:
+      - "v*"
+      - "m5stack-v*"
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  BUILD_TYPE: MinSizeRel
+  BUILD_DIR: build/macos
+
+jobs:
+  macos:
+    name: macOS Universal
+    runs-on: macos-14
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Qt via Homebrew
+        run: |
+          brew install qt@6 cmake ninja
+
+      - name: Configure
+        run: |
+          QT_PREFIX="$(brew --prefix qt@6)"
+          cmake -S src -B "$BUILD_DIR" -G Ninja \
+            -DCMAKE_BUILD_TYPE="$BUILD_TYPE" \
+            -DCMAKE_PREFIX_PATH="$QT_PREFIX" \
+            -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64" \
+            -DENABLE_CHECK_VERSION=OFF \
+            -DENABLE_TELEMETRY=OFF \
+            -DIMAGER_SIGNED_APP=OFF
+
+      - name: Build
+        run: cmake --build "$BUILD_DIR" --parallel $(sysctl -n hw.ncpu)
+
+      - name: Create DMG
+        run: cmake --build "$BUILD_DIR" --target dmg
+
+      - name: Collect artifacts
+        run: |
+          mkdir -p dist
+
+          if [ "$GITHUB_REF_TYPE" = "tag" ]; then
+            version="${GITHUB_REF_NAME}"
+          else
+            version="$(git describe --tags --dirty --always)"
+          fi
+          version="${version#v}"
+
+          # Find the generated DMG
+          dmg_file=$(find "$BUILD_DIR" -name "*.dmg" -type f | head -1)
+          if [ -z "$dmg_file" ]; then
+            echo "ERROR: No DMG file was produced"
+            exit 1
+          fi
+
+          cp "$dmg_file" "dist/M5Stack-Imager-${version}-macos-universal.dmg"
+          ls -la dist/
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: m5stack-imager-macos-universal
+          path: dist/*
+          if-no-files-found: error
+
+      - name: Publish GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="${{ github.ref_name }}"
+          if ! gh release view "$tag" > /dev/null 2>&1; then
+            gh release create "$tag" \
+              --title "M5Stack Imager $tag" \
+              --notes "Automated build for $tag."
+          fi
+          gh release upload "$tag" dist/* --clobber
