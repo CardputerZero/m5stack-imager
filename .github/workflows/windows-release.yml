@@ -17,7 +17,7 @@ permissions:
 env:
   BUILD_TYPE: MinSizeRel
   BUILD_DIR: build/windows
-  QT_ROOT: D:/a/_temp/msys64/ucrt64
+  QT_VERSION: "6.9.0"
 
 jobs:
   windows:
@@ -30,40 +30,40 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Install Qt 6.9 (MinGW)
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: ${{ env.QT_VERSION }}
+          host: windows
+          target: desktop
+          arch: win64_mingw
+
       - name: Install Inno Setup
         shell: pwsh
         run: choco install innosetup --no-progress -y
 
-      - name: Install MSYS2 Qt toolchain
-        uses: msys2/setup-msys2@v2
-        with:
-          msystem: UCRT64
-          update: true
-          install: >-
-            git
-            mingw-w64-ucrt-x86_64-toolchain
-            mingw-w64-ucrt-x86_64-cmake
-            mingw-w64-ucrt-x86_64-ninja
-            mingw-w64-ucrt-x86_64-qt6-base
-            mingw-w64-ucrt-x86_64-qt6-declarative
-            mingw-w64-ucrt-x86_64-qt6-svg
-            mingw-w64-ucrt-x86_64-qt6-tools
-
       - name: Configure
-        shell: msys2 {0}
+        shell: pwsh
         run: |
-          cmake -S src -B "$BUILD_DIR" -G Ninja \
-            -DCMAKE_BUILD_TYPE="$BUILD_TYPE" \
-            -DQt6_ROOT="$QT_ROOT" \
-            -DMINGW64_ROOT="$QT_ROOT" \
-            -DENABLE_INNO_INSTALLER=ON \
-            -DENABLE_CHECK_VERSION=OFF \
-            -DENABLE_TELEMETRY=OFF \
+          # Qt's MinGW ships its own GCC in Tools/mingwXXXX_64
+          $mingwDir = Get-ChildItem "$env:IQTA_TOOLS" -Directory -Filter "mingw*" | Select-Object -First 1
+          if ($mingwDir) {
+            $env:PATH = "$($mingwDir.FullName)\bin;$env:PATH"
+            echo "$($mingwDir.FullName)\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          }
+          cmake -S src -B $env:BUILD_DIR -G "Ninja" `
+            -DCMAKE_BUILD_TYPE="$env:BUILD_TYPE" `
+            -DCMAKE_C_COMPILER=gcc `
+            -DCMAKE_CXX_COMPILER=g++ `
+            -DMINGW64_ROOT="$($mingwDir.FullName)" `
+            -DENABLE_INNO_INSTALLER=ON `
+            -DENABLE_CHECK_VERSION=OFF `
+            -DENABLE_TELEMETRY=OFF `
             -DIMAGER_SIGNED_APP=OFF
 
       - name: Build installer
-        shell: msys2 {0}
-        run: cmake --build "$BUILD_DIR" --target inno_installer --parallel 2
+        shell: pwsh
+        run: cmake --build $env:BUILD_DIR --target inno_installer --parallel 2
 
       - name: Collect artifacts
         shell: pwsh
