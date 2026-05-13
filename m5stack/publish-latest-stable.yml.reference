@@ -1,6 +1,8 @@
 # Reference workflow for CardputerZero/pi-gen repository
 # Replaces the existing publish-latest-stable.yml
-# Publishes stable image to OSS AND generates os-list.json
+# Generates and publishes os-list.json to OSS.
+# Image artifact upload is intentionally disabled here; image publishing is
+# handled by the image release owner.
 
 name: Publish Latest Stable to OSS
 
@@ -16,7 +18,7 @@ permissions:
 
 jobs:
   publish:
-    name: Publish stable image and os-list.json
+    name: Publish os-list.json
     runs-on: ubuntu-latest
 
     steps:
@@ -163,18 +165,19 @@ jobs:
           access-key-id: ${{ secrets.OSS_ACCESS_KEY_ID }}
           access-key-secret: ${{ secrets.OSS_ACCESS_KEY_SECRET }}
 
-      - name: Upload to OSS
+      - name: Upload manifest to OSS
         run: |
           ASSET_NAME="${{ steps.download.outputs.name }}"
 
-          # Upload image as latest stable
-          echo "Uploading $ASSET_NAME -> cardputerzero-trixie-arm64-latest.img.xz"
-          ossutil cp -f "$ASSET_NAME" \
-            "oss://cardputer-zero-repo/cardputerzero-trixie-arm64-latest.img.xz"
-
-          # Also keep a dated copy
-          ossutil cp -f "$ASSET_NAME" \
-            "oss://cardputer-zero-repo/images/$ASSET_NAME"
+          # Image upload is not handled by this workflow.
+          # The manifest below references the externally published latest image:
+          # https://cardputer-zero-repo.oss-cn-shenzhen.aliyuncs.com/cardputerzero-trixie-arm64-latest.img.xz
+          #
+          # If this workflow ever owns image publishing, restore equivalent steps:
+          # ossutil cp -f "$ASSET_NAME" \
+          #   "oss://cardputer-zero-repo/cardputerzero-trixie-arm64-latest.img.xz"
+          # ossutil cp -f "$ASSET_NAME" \
+          #   "oss://cardputer-zero-repo/images/$ASSET_NAME"
 
           # Upload os-list.json
           ossutil cp -f os-list.json \

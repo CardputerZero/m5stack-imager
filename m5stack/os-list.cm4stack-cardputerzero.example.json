@@ -11,7 +11,6 @@
           "pi4-64bit",
           "pi4-32bit"
         ],
-        "default": true,
         "matching_type": "exclusive",
         "architecture": "armv8",
         "capabilities": [
@@ -23,12 +22,14 @@
       },
       {
         "name": "CardputerZero",
-        "description": "M5Stack pocket Raspberry Pi computer. Update tags after final hardware release.",
+        "description": "M5Stack pocket Raspberry Pi Zero 2W computer.",
+        "icon": "https://cardputer-zero-repo.oss-cn-shenzhen.aliyuncs.com/icons/cardputerzero.png",
         "tags": [
           "m5-cardputerzero",
           "pi3-64bit",
           "pi3-32bit"
         ],
+        "default": true,
         "matching_type": "exclusive",
         "architecture": "armv8",
         "capabilities": [
@@ -95,19 +96,21 @@
       ]
     },
     {
-      "name": "Cardputer Zero OS",
-      "description": "M5Stack Cardputer Zero Linux image.",
-      "url": "https://m5stack.oss-cn-shenzhen.aliyuncs.com/resource/linux/cp0/raspi-shrink.img.zip",
-      "extract_size": 8880091136,
-      "extract_sha256": "2a0f2f1cf565d6e793a77e7a21a29cbbc9cc98e3afe156f02f01e5a70c7129f3",
-      "image_download_size": 2439984258,
-      "image_download_sha256": "14b76deab0dd882b6543466e1b1f92d4655cfec792252f07cb7f579bddfe4af7",
-      "release_date": "2026-04-30",
+      "name": "CardputerZero OS (Trixie arm64)",
+      "description": "Debian Trixie arm64 desktop for CardputerZero.",
+      "icon": "https://cardputer-zero-repo.oss-cn-shenzhen.aliyuncs.com/icons/cardputerzero.png",
+      "url": "https://cardputer-zero-repo.oss-cn-shenzhen.aliyuncs.com/cardputerzero-trixie-arm64-latest.img.xz",
+      "extract_size": 0,
+      "extract_sha256": "",
+      "image_download_size": 1524987972,
+      "image_download_sha256": "",
+      "release_date": "2026-05-13",
       "init_format": "systemd",
       "devices": [
-        "m5-cardputerzero"
+        "m5-cardputerzero",
+        "pi3-64bit"
       ],
-      "architecture": "armhf",
+      "architecture": "armv8",
       "capabilities": [
         "i2c",
         "spi",

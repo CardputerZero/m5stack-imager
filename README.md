@@ -28,21 +28,21 @@ The original upstream README is preserved in `README.upstream.md`. Keep
 
 ## M5Stack Repository Manifest
 
-The app reads an OS list JSON manifest. The default is configured in `src/config.h`
-through `M5STACK_IMAGER_DEFAULT_REPO_URL`:
+The app reads an OS list JSON manifest. The default is configured through the
+`M5STACK_IMAGER_DEFAULT_REPO_URL` CMake cache variable, with a fallback in
+`src/config.h`:
 
 ```text
-qrc:/m5stack/os-list.json
+https://cardputer-zero-repo.oss-cn-shenzhen.aliyuncs.com/os-list.json
 ```
 
-That default embeds the checked-in example manifest at
-`m5stack/os-list.cm4stack-cardputerzero.example.json`, so early test builds do
-not depend on a published CDN endpoint. When the production manifest endpoint is
-ready, either change the CMake default or build with:
+The fallback in `src/config.h` still points at the checked-in example manifest
+embedded as `qrc:/m5stack/os-list.json`; use that only for offline test builds.
+To force a different manifest at build time, pass:
 
 ```sh
 cmake -S src -B build \
-  -DM5STACK_IMAGER_DEFAULT_REPO_URL=https://m5stack.oss-cn-shenzhen.aliyuncs.com/resource/linux/m5stack-imager/os_list_v1.json
+  -DM5STACK_IMAGER_DEFAULT_REPO_URL=https://cardputer-zero-repo.oss-cn-shenzhen.aliyuncs.com/os-list.json
 ```
 
 You can also test a local or remote manifest at runtime:
@@ -51,20 +51,30 @@ You can also test a local or remote manifest at runtime:
 rpi-imager --repo m5stack/os-list.cm4stack-cardputerzero.example.json
 ```
 
-That example exposes CM4Stack and CardputerZero in the device picker and uses
-the current CM4StackOS canary images plus Raspberry Pi OS image URLs as
-known-good starter entries. Replace the placeholder icon URL and add
-CardputerZero images once release images and SHA256 values are available.
-
-Use the normal M5Stack OSS path style for production images, for example:
+That example exposes CM4Stack and CardputerZero in the device picker. The
+CardputerZero entry points at the latest Trixie arm64 image:
 
 ```text
-https://m5stack.oss-cn-shenzhen.aliyuncs.com/resource/linux/cp0/raspi-shrink.img.zip
+https://cardputer-zero-repo.oss-cn-shenzhen.aliyuncs.com/cardputerzero-trixie-arm64-latest.img.xz
 ```
+
+`m5stack/oss/os-list.json` is the production manifest uploaded to
+`https://cardputer-zero-repo.oss-cn-shenzhen.aliyuncs.com/os-list.json`.
+`m5stack/os-list-template.json` mirrors that production manifest for reference.
+
+OSS upload assets live under `m5stack/oss/`:
+
+- `os-list.json` is the manifest published to the bucket root.
+- `icons/*.png` are published to the `icons/` prefix.
+- `.env.example` documents the local OSS credentials format.
+- `.env` is ignored by git and used only for local uploads.
+
+Run `m5stack/oss/upload-oss.sh` to publish the manifest and icons. The script
+does not upload OS image artifacts; image publishing is handled separately.
 
 ## Build
 
-Use the upstream build flow for now:
+Use the upstream build flow:
 
 ```sh
 cd src
@@ -72,15 +82,18 @@ cmake -S . -B ../build -DCMAKE_BUILD_TYPE=RelWithDebInfo
 cmake --build ../build
 ```
 
-Linux AppImage and macOS DMG flows are still the upstream flows. The Windows
-installer can be built by GitHub Actions from this repository.
-
 ## GitHub Actions and Releases
 
-`.github/workflows/windows-release.yml` builds an unsigned Windows x64 package
-on `push`, `pull_request`, and manual `workflow_dispatch`.
+The repository includes release workflows for all supported desktop platforms:
 
-The workflow produces:
+- `.github/workflows/windows-release.yml` builds an unsigned Windows x64
+  installer and portable zip.
+- `.github/workflows/macos-release.yml` builds a macOS arm64 DMG.
+- `.github/workflows/linux-release.yml` builds a Linux x64 tarball.
+
+The workflows run on `push`, `pull_request`, and manual `workflow_dispatch`.
+Tagged builds also upload artifacts to the matching GitHub Release. The Windows
+workflow produces:
 
 - `M5Stack-Imager-<version>-windows-x64-installer.exe`
 - `M5Stack-Imager-<version>-windows-x64-portable.zip`
@@ -92,10 +105,9 @@ git tag v0.1.0
 git push origin v0.1.0
 ```
 
-The release job creates or updates the matching GitHub Release and uploads the
-Windows installer plus portable zip. Builds are unsigned until M5Stack code
-signing credentials are wired into the workflow, so Windows may show the normal
-SmartScreen warning.
+Builds are unsigned until M5Stack code signing credentials are wired into the
+workflows, so Windows may show the normal SmartScreen warning and macOS may show
+Gatekeeper warnings.
 
 Packaging identifiers such as `com.raspberrypi.rpi-imager`, `rpi-imager`, and
 `.rpi-imager-manifest` still need a dedicated M5Stack rename pass before public
@@ -103,9 +115,11 @@ release.
 
 ## Immediate TODO
 
-- Publish the production M5Stack OS manifest and replace the placeholder URL if
-  the CDN path changes.
-- Add official CM4Stack and CardputerZero icons to the manifest.
+- Keep the production M5Stack OS manifest at
+  `https://cardputer-zero-repo.oss-cn-shenzhen.aliyuncs.com/os-list.json`
+  updated when image metadata changes.
+- Fill in the CardputerZero image `extract_size`, `extract_sha256`, and
+  `image_download_sha256` once the final image artifact is available.
 - Decide whether M5Stack wants its own anonymous metrics endpoint; telemetry is
   disabled by default in this fork.
 - Add M5Stack-specific first boot customisation only after the target image
