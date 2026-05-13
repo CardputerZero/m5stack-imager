@@ -17,10 +17,11 @@ permissions:
 env:
   BUILD_TYPE: MinSizeRel
   BUILD_DIR: build/macos
+  QT_VERSION: "6.9.0"
 
 jobs:
   macos:
-    name: macOS Universal
+    name: macOS arm64
     runs-on: macos-14
 
     steps:
@@ -29,17 +30,24 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install Qt via Homebrew
-        run: |
-          brew install qt@6 cmake ninja
+      - name: Install Qt 6.9
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: ${{ env.QT_VERSION }}
+          host: mac
+          target: desktop
+          arch: clang_64
+          modules: qtsvg qtdeclarative
+
+      - name: Install tools
+        run: brew install cmake ninja
 
       - name: Configure
         run: |
-          QT_PREFIX="$(brew --prefix qt@6)"
           cmake -S src -B "$BUILD_DIR" -G Ninja \
             -DCMAKE_BUILD_TYPE="$BUILD_TYPE" \
-            -DCMAKE_PREFIX_PATH="$QT_PREFIX" \
-            -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64" \
+            -DCMAKE_PREFIX_PATH="$Qt6_DIR" \
+            -DCMAKE_OSX_ARCHITECTURES="arm64" \
             -DENABLE_CHECK_VERSION=OFF \
             -DENABLE_TELEMETRY=OFF \
             -DIMAGER_SIGNED_APP=OFF
@@ -68,13 +76,13 @@ jobs:
             exit 1
           fi
 
-          cp "$dmg_file" "dist/M5Stack-Imager-${version}-macos-universal.dmg"
+          cp "$dmg_file" "dist/M5Stack-Imager-${version}-macos-arm64.dmg"
           ls -la dist/
 
       - name: Upload workflow artifact
         uses: actions/upload-artifact@v4
         with:
-          name: m5stack-imager-macos-universal
+          name: m5stack-imager-macos-arm64
           path: dist/*
           if-no-files-found: error
 
