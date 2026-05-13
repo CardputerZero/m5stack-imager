@@ -1,0 +1,150 @@
+name: Create Release
+
+on:
+  push:
+    tags:
+      - "v*"
+      - "m5stack-v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to release (e.g. v2.1.0)'
+        required: true
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  release:
+    name: Collect artifacts and publish release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Determine tag and commit
+        id: info
+        run: |
+          if [[ -n "${{ inputs.tag }}" ]]; then
+            TAG="${{ inputs.tag }}"
+          else
+            TAG="${GITHUB_REF_NAME}"
+          fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
+          COMMIT=$(git rev-list -n 1 "$TAG" 2>/dev/null || git rev-parse HEAD)
+          echo "commit=$COMMIT" >> "$GITHUB_OUTPUT"
+          echo "Tag: $TAG, Commit: $COMMIT"
+
+      - name: Wait for all platform builds
+        run: |
+          COMMIT="${{ steps.info.outputs.commit }}"
+          echo "Waiting for all platform builds on commit $COMMIT..."
+
+          for i in $(seq 1 90); do
+            ALL_DONE=true
+            ALL_SUCCESS=true
+
+            for workflow in "Linux Build and Release" "macOS Build and Release" "Windows Build and Release"; do
+              RESULT=$(gh run list --repo "$GITHUB_REPOSITORY" \
+                --workflow="$workflow" --commit="$COMMIT" --limit 1 \
+                --json status,conclusion --jq '.[0] // empty')
+
+              STATUS=$(echo "$RESULT" | jq -r '.status // "not_found"')
+              CONCLUSION=$(echo "$RESULT" | jq -r '.conclusion // ""')
+
+              if [[ "$STATUS" == "in_progress" || "$STATUS" == "queued" || "$STATUS" == "waiting" ]]; then
+                ALL_DONE=false
+                echo "  ⏳ $workflow: $STATUS"
+              elif [[ "$STATUS" == "completed" && "$CONCLUSION" != "success" ]]; then
+                ALL_SUCCESS=false
+                echo "  ❌ $workflow: $CONCLUSION"
+              elif [[ "$STATUS" == "completed" ]]; then
+                echo "  ✓ $workflow: success"
+              else
+                ALL_DONE=false
+                echo "  ? $workflow: not started yet"
+              fi
+            done
+
+            if $ALL_DONE; then
+              if $ALL_SUCCESS; then
+                echo "All builds completed successfully!"
+              else
+                echo "WARNING: Some builds failed, releasing available artifacts only"
+              fi
+              break
+            fi
+
+            if [[ $i -eq 90 ]]; then
+              echo "Timeout after 45 minutes. Releasing whatever is available."
+              break
+            fi
+
+            sleep 30
+          done
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Download artifacts from all builds
+        run: |
+          COMMIT="${{ steps.info.outputs.commit }}"
+          mkdir -p release-assets
+
+          for workflow in "Linux Build and Release" "macOS Build and Release" "Windows Build and Release"; do
+            RUN_ID=$(gh run list --repo "$GITHUB_REPOSITORY" \
+              --workflow="$workflow" --commit="$COMMIT" --limit 1 \
+              --json databaseId,conclusion --jq '.[0] | select(.conclusion=="success") | .databaseId')
+
+            if [[ -z "$RUN_ID" ]]; then
+              echo "⚠️  No successful run for: $workflow"
+              continue
+            fi
+
+            echo "Downloading from $workflow (run $RUN_ID)..."
+            gh run download "$RUN_ID" --repo "$GITHUB_REPOSITORY" --dir release-assets/
+          done
+
+          echo ""
+          echo "Downloaded artifacts:"
+          find release-assets -type f | sort
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Publish GitHub Release
+        run: |
+          TAG="${{ steps.info.outputs.tag }}"
+
+          # Flatten nested artifact directories
+          mkdir -p final-assets
+          find release-assets -type f -exec cp {} final-assets/ \;
+
+          echo "Release assets:"
+          ls -lh final-assets/
+
+          ASSET_COUNT=$(find final-assets -type f | wc -l)
+          if [[ "$ASSET_COUNT" -eq 0 ]]; then
+            echo "ERROR: No assets to release!"
+            exit 1
+          fi
+
+          # Create or update release
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            echo "Release $TAG already exists, uploading assets..."
+            gh release upload "$TAG" final-assets/* --repo "$GITHUB_REPOSITORY" --clobber
+          else
+            echo "Creating release $TAG..."
+            gh release create "$TAG" final-assets/* \
+              --repo "$GITHUB_REPOSITORY" \
+              --title "M5Stack Imager $TAG" \
+              --generate-notes
+          fi
+
+          echo ""
+          echo "✓ Release: https://github.com/$GITHUB_REPOSITORY/releases/tag/$TAG"
+        env:
+          GH_TOKEN: ${{ github.token }}

@@ -83,19 +83,6 @@ jobs:
           path: dist/*
           if-no-files-found: error
 
-      - name: Publish GitHub Release
-        if: startsWith(github.ref, 'refs/tags/')
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          tag="${{ github.ref_name }}"
-          if ! gh release view "$tag" > /dev/null 2>&1; then
-            gh release create "$tag" \
-              --title "M5Stack Imager $tag" \
-              --notes "Automated build for $tag."
-          fi
-          gh release upload "$tag" dist/* --clobber
-
   linux-arm64:
     name: Linux arm64
     runs-on: ubuntu-24.04-arm
@@ -160,15 +147,3 @@ jobs:
           path: dist/*
           if-no-files-found: error
 
-      - name: Publish GitHub Release
-        if: startsWith(github.ref, 'refs/tags/')
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          tag="${{ github.ref_name }}"
-          if ! gh release view "$tag" > /dev/null 2>&1; then
-            gh release create "$tag" \
-              --title "M5Stack Imager $tag" \
-              --notes "Automated build for $tag."
-          fi
-          gh release upload "$tag" dist/* --clobber
