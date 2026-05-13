@@ -37,25 +37,41 @@ jobs:
           host: windows
           target: desktop
           arch: win64_mingw
+          tools: tools_mingw1310
 
       - name: Install Inno Setup
         shell: pwsh
         run: choco install innosetup --no-progress -y
 
+      - name: Setup MinGW from Qt Tools
+        id: mingw
+        shell: pwsh
+        run: |
+          # Find the MinGW bin directory installed by install-qt-action
+          $toolsDir = "$env:IQTA_TOOLS"
+          Write-Host "IQTA_TOOLS: $toolsDir"
+          $mingwBin = Get-ChildItem "$toolsDir" -Recurse -Directory -Filter "bin" |
+            Where-Object { Test-Path "$($_.FullName)\g++.exe" } |
+            Select-Object -First 1
+          if (-not $mingwBin) {
+            Write-Host "Listing tools directory:"
+            Get-ChildItem "$toolsDir" -Recurse -Depth 2
+            throw "Could not find MinGW bin directory in Qt tools"
+          }
+          $mingwRoot = Split-Path $mingwBin.FullName -Parent
+          Write-Host "MinGW root: $mingwRoot"
+          Write-Host "MinGW bin: $($mingwBin.FullName)"
+          echo "$($mingwBin.FullName)" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          echo "MINGW_ROOT=$mingwRoot" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
       - name: Configure
         shell: pwsh
         run: |
-          # Qt's MinGW ships its own GCC in Tools/mingwXXXX_64
-          $mingwDir = Get-ChildItem "$env:IQTA_TOOLS" -Directory -Filter "mingw*" | Select-Object -First 1
-          if ($mingwDir) {
-            $env:PATH = "$($mingwDir.FullName)\bin;$env:PATH"
-            echo "$($mingwDir.FullName)\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-          }
           cmake -S src -B $env:BUILD_DIR -G "Ninja" `
             -DCMAKE_BUILD_TYPE="$env:BUILD_TYPE" `
             -DCMAKE_C_COMPILER=gcc `
             -DCMAKE_CXX_COMPILER=g++ `
-            -DMINGW64_ROOT="$($mingwDir.FullName)" `
+            -DMINGW64_ROOT="$env:MINGW_ROOT" `
             -DENABLE_INNO_INSTALLER=ON `
             -DENABLE_CHECK_VERSION=OFF `
             -DENABLE_TELEMETRY=OFF `
