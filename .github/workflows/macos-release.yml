@@ -21,7 +21,7 @@ env:
 
 jobs:
   macos:
-    name: macOS arm64
+    name: macOS Universal (arm64 + x86_64)
     runs-on: macos-14
 
     steps:
@@ -46,7 +46,7 @@ jobs:
           cmake -S src -B "$BUILD_DIR" -G Ninja \
             -DCMAKE_BUILD_TYPE="$BUILD_TYPE" \
             -DCMAKE_PREFIX_PATH="$Qt6_DIR" \
-            -DCMAKE_OSX_ARCHITECTURES="arm64" \
+            -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64" \
             -DENABLE_CHECK_VERSION=OFF \
             -DENABLE_TELEMETRY=OFF \
             -DIMAGER_SIGNED_APP=OFF
@@ -75,13 +75,13 @@ jobs:
             exit 1
           fi
 
-          cp "$dmg_file" "dist/M5Stack-Imager-${version}-macos-arm64.dmg"
+          cp "$dmg_file" "dist/M5Stack-Imager-${version}-macos-universal.dmg"
           ls -la dist/
 
       - name: Upload workflow artifact
         uses: actions/upload-artifact@v4
         with:
-          name: m5stack-imager-macos-arm64
+          name: m5stack-imager-macos-universal
           path: dist/*
           if-no-files-found: error
 

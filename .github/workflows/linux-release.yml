@@ -16,11 +16,10 @@ permissions:
 
 env:
   BUILD_TYPE: MinSizeRel
-  BUILD_DIR: build/linux
   QT_VERSION: "6.9.0"
 
 jobs:
-  linux:
+  linux-x64:
     name: Linux x64
     runs-on: ubuntu-24.04
 
@@ -53,7 +52,7 @@ jobs:
 
       - name: Configure
         run: |
-          cmake -S src -B "$BUILD_DIR" -G Ninja \
+          cmake -S src -B build -G Ninja \
             -DCMAKE_BUILD_TYPE="$BUILD_TYPE" \
             -DCMAKE_INSTALL_PREFIX=/usr \
             -DENABLE_CHECK_VERSION=OFF \
@@ -61,7 +60,7 @@ jobs:
             -DIMAGER_SIGNED_APP=OFF
 
       - name: Build
-        run: cmake --build "$BUILD_DIR" --parallel $(nproc)
+        run: cmake --build build --parallel $(nproc)
 
       - name: Collect artifacts
         run: |
@@ -74,14 +73,90 @@ jobs:
           fi
           version="${version#v}"
 
-          # Create a portable tarball
-          DESTDIR="$(pwd)/install" cmake --install "$BUILD_DIR"
+          DESTDIR="$(pwd)/install" cmake --install build
           tar -czf "dist/M5Stack-Imager-${version}-linux-x64.tar.gz" -C install .
 
       - name: Upload workflow artifact
         uses: actions/upload-artifact@v4
         with:
           name: m5stack-imager-linux-x64
+          path: dist/*
+          if-no-files-found: error
+
+      - name: Publish GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="${{ github.ref_name }}"
+          if ! gh release view "$tag" > /dev/null 2>&1; then
+            gh release create "$tag" \
+              --title "M5Stack Imager $tag" \
+              --notes "Automated build for $tag."
+          fi
+          gh release upload "$tag" dist/* --clobber
+
+  linux-arm64:
+    name: Linux arm64
+    runs-on: ubuntu-24.04-arm
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Qt 6.9
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: ${{ env.QT_VERSION }}
+          host: linux_arm64
+          target: desktop
+          arch: linux_gcc_arm64
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential cmake ninja-build git \
+            libgnutls28-dev libidn2-dev nettle-dev \
+            libcurl4-openssl-dev libssl-dev \
+            libudev-dev libusb-1.0-0-dev \
+            liburing-dev \
+            libgl-dev libegl-dev \
+            libdbus-1-dev \
+            util-linux
+
+      - name: Configure
+        run: |
+          cmake -S src -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE="$BUILD_TYPE" \
+            -DCMAKE_INSTALL_PREFIX=/usr \
+            -DENABLE_CHECK_VERSION=OFF \
+            -DENABLE_TELEMETRY=OFF \
+            -DIMAGER_SIGNED_APP=OFF
+
+      - name: Build
+        run: cmake --build build --parallel $(nproc)
+
+      - name: Collect artifacts
+        run: |
+          mkdir -p dist
+
+          if [ "$GITHUB_REF_TYPE" = "tag" ]; then
+            version="${GITHUB_REF_NAME}"
+          else
+            version="$(git describe --tags --dirty --always)"
+          fi
+          version="${version#v}"
+
+          DESTDIR="$(pwd)/install" cmake --install build
+          tar -czf "dist/M5Stack-Imager-${version}-linux-arm64.tar.gz" -C install .
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: m5stack-imager-linux-arm64
           path: dist/*
           if-no-files-found: error
 
