@@ -37,7 +37,6 @@ jobs:
           host: linux
           target: desktop
           arch: linux_gcc_64
-          modules: qtsvg qtdeclarative
 
       - name: Install system dependencies
         run: |
