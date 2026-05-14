@@ -21,7 +21,7 @@ env:
 jobs:
   linux-x64:
     name: Linux x64
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-22.04
 
     steps:
       - name: Checkout
@@ -48,19 +48,13 @@ jobs:
             liburing-dev \
             libgl-dev libegl-dev \
             libdbus-1-dev \
+            libfuse2 \
             util-linux
 
-      - name: Configure
+      - name: Build AppImage
         run: |
-          cmake -S src -B build -G Ninja \
-            -DCMAKE_BUILD_TYPE="$BUILD_TYPE" \
-            -DCMAKE_INSTALL_PREFIX=/usr \
-            -DENABLE_CHECK_VERSION=OFF \
-            -DENABLE_TELEMETRY=OFF \
-            -DIMAGER_SIGNED_APP=OFF
-
-      - name: Build
-        run: cmake --build build --parallel $(nproc)
+          chmod +x create-appimage.sh
+          ./create-appimage.sh --arch=x86_64 --qt-root="$QT_ROOT_DIR"
 
       - name: Collect artifacts
         run: |
@@ -73,8 +67,15 @@ jobs:
           fi
           version="${version#v}"
 
-          DESTDIR="$(pwd)/install" cmake --install build
-          tar -czf "dist/M5Stack-Imager-${version}-linux-x64.tar.gz" -C install .
+          APPIMAGE=$(find . -maxdepth 1 -name "*x86_64.AppImage" ! -type l | head -1)
+          if [ -z "$APPIMAGE" ]; then
+            echo "ERROR: No AppImage produced"
+            find . -name "*.AppImage" -maxdepth 1
+            exit 1
+          fi
+
+          cp "$APPIMAGE" "dist/M5Stack-Imager-${version}-linux-x64.AppImage"
+          ls -lh dist/
 
       - name: Upload workflow artifact
         uses: actions/upload-artifact@v4
@@ -112,19 +113,13 @@ jobs:
             liburing-dev \
             libgl-dev libegl-dev \
             libdbus-1-dev \
+            libfuse2 \
             util-linux
 
-      - name: Configure
+      - name: Build AppImage
         run: |
-          cmake -S src -B build -G Ninja \
-            -DCMAKE_BUILD_TYPE="$BUILD_TYPE" \
-            -DCMAKE_INSTALL_PREFIX=/usr \
-            -DENABLE_CHECK_VERSION=OFF \
-            -DENABLE_TELEMETRY=OFF \
-            -DIMAGER_SIGNED_APP=OFF
-
-      - name: Build
-        run: cmake --build build --parallel $(nproc)
+          chmod +x create-appimage.sh
+          ./create-appimage.sh --arch=aarch64 --qt-root="$QT_ROOT_DIR"
 
       - name: Collect artifacts
         run: |
@@ -137,8 +132,15 @@ jobs:
           fi
           version="${version#v}"
 
-          DESTDIR="$(pwd)/install" cmake --install build
-          tar -czf "dist/M5Stack-Imager-${version}-linux-arm64.tar.gz" -C install .
+          APPIMAGE=$(find . -maxdepth 1 -name "*aarch64.AppImage" ! -type l | head -1)
+          if [ -z "$APPIMAGE" ]; then
+            echo "ERROR: No AppImage produced"
+            find . -name "*.AppImage" -maxdepth 1
+            exit 1
+          fi
+
+          cp "$APPIMAGE" "dist/M5Stack-Imager-${version}-linux-arm64.AppImage"
+          ls -lh dist/
 
       - name: Upload workflow artifact
         uses: actions/upload-artifact@v4
@@ -146,4 +148,3 @@ jobs:
           name: m5stack-imager-linux-arm64
           path: dist/*
           if-no-files-found: error
-
