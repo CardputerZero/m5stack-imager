@@ -96,12 +96,23 @@ jobs:
         if: steps.signing.outputs.has_identity == 'true'
         run: |
           echo "========== Post-Build Signing Verification =========="
-          APP_PATH=$(find "$BUILD_DIR" -name "*.app" -maxdepth 1 | head -1)
-          if [ -z "$APP_PATH" ]; then
-            echo "No .app bundle found — skipping verification"
+          DMG_FILE=$(find "$BUILD_DIR" -name "*.dmg" -type f | head -1)
+          if [ -z "$DMG_FILE" ]; then
+            echo "No DMG found — skipping verification"
             exit 0
           fi
-          echo "App: $APP_PATH"
+          echo "DMG: $DMG_FILE"
+
+          MOUNT_DIR=$(mktemp -d)
+          hdiutil attach "$DMG_FILE" -nobrowse -readonly -noverify -mountpoint "$MOUNT_DIR"
+
+          APP_PATH=$(find "$MOUNT_DIR" -name "*.app" -maxdepth 1 | head -1)
+          if [ -z "$APP_PATH" ]; then
+            echo "No .app found inside DMG"
+            hdiutil detach "$MOUNT_DIR" || true
+            exit 1
+          fi
+          echo "App inside DMG: $APP_PATH"
 
           echo "--- codesign --verify ---"
           codesign --verify --deep --strict --verbose=2 "$APP_PATH" 2>&1 && \
@@ -109,6 +120,9 @@ jobs:
 
           TEAM=$(codesign -dv "$APP_PATH" 2>&1 | grep "TeamIdentifier=" || echo "NONE")
           echo "  $TEAM"
+
+          hdiutil detach "$MOUNT_DIR" || true
+
           if echo "$TEAM" | grep -q "not set"; then
             echo "❌ TeamIdentifier not set — signing failed!"
             exit 1
