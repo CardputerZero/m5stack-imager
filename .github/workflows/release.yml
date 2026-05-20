@@ -2,6 +2,8 @@ name: Create Release
 
 on:
   push:
+    branches:
+      - main
     tags:
       - "v*"
       - "m5stack-v*"
@@ -19,6 +21,8 @@ jobs:
   release:
     name: Collect artifacts and publish release
     runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.info.outputs.tag }}
 
     steps:
       - name: Checkout
@@ -31,8 +35,17 @@ jobs:
         run: |
           if [[ -n "${{ inputs.tag }}" ]]; then
             TAG="${{ inputs.tag }}"
-          else
+          elif [[ "$GITHUB_REF" == refs/tags/* ]]; then
             TAG="${GITHUB_REF_NAME}"
+          else
+            # Push to main: generate a dev tag
+            VERSION=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+            SHORT_SHA=$(echo "$GITHUB_SHA" | cut -c1-7)
+            TAG="${VERSION}-dev.${SHORT_SHA}"
+            echo "Auto-generated dev tag: $TAG"
+            # Create the tag so release can use it
+            git tag "$TAG"
+            git push origin "$TAG" || true
           fi
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
 
@@ -118,6 +131,10 @@ jobs:
       - name: Publish GitHub Release
         run: |
           TAG="${{ steps.info.outputs.tag }}"
+          IS_DEV=false
+          if [[ "$TAG" == *"-dev."* ]]; then
+            IS_DEV=true
+          fi
 
           # Flatten nested artifact directories
           mkdir -p final-assets
@@ -138,10 +155,15 @@ jobs:
             gh release upload "$TAG" final-assets/* --repo "$GITHUB_REPOSITORY" --clobber
           else
             echo "Creating release $TAG..."
+            PRERELEASE_FLAG=""
+            if [[ "$IS_DEV" == "true" ]]; then
+              PRERELEASE_FLAG="--prerelease"
+            fi
             gh release create "$TAG" final-assets/* \
               --repo "$GITHUB_REPOSITORY" \
               --title "M5Stack Imager $TAG" \
-              --generate-notes
+              --generate-notes \
+              $PRERELEASE_FLAG
           fi
 
           echo ""
@@ -163,7 +185,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           source .github/scripts/notarize-common.sh
-          download_release_dmgs "${{ needs.release.outputs.tag || steps.info.outputs.tag }}" /tmp/dmgs || {
+          download_release_dmgs "${{ needs.release.outputs.tag }}" /tmp/dmgs || {
             echo "No DMGs found, skipping notarization"
             echo "skip=true" >> $GITHUB_OUTPUT
           }
@@ -186,8 +208,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           source .github/scripts/notarize-common.sh
-          TAG=$(gh release list --limit 1 --json tagName -q '.[0].tagName')
-          reupload_stapled "$TAG" /tmp/dmgs
+          reupload_stapled "${{ needs.release.outputs.tag }}" /tmp/dmgs
 
       - name: Update release notes
         if: steps.download.outputs.skip != 'true' && always() && steps.download.outcome == 'success'
@@ -195,7 +216,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           source .github/scripts/notarize-common.sh
-          TAG=$(gh release list --limit 1 --json tagName -q '.[0].tagName')
+          TAG="${{ needs.release.outputs.tag }}"
 
           if [ "$(cat /tmp/notarize-status.txt 2>/dev/null)" = "true" ]; then
             update_release_notarization "$TAG" \
