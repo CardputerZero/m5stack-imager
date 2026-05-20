@@ -39,23 +39,74 @@ jobs:
           arch: clang_64
 
       - name: Install tools
-        run: brew install cmake ninja
+        run: brew install cmake ninja create-dmg
+
+      - name: Import Code-Signing Certificate
+        env:
+          MAC_CERTS_P12: ${{ secrets.MAC_CERTS_P12 }}
+          MAC_CERTS_PASSWORD: ${{ secrets.MAC_CERTS_PASSWORD }}
+        if: env.MAC_CERTS_P12 != ''
+        uses: apple-actions/import-codesign-certs@v2
+        with:
+          p12-file-base64: ${{ secrets.MAC_CERTS_P12 }}
+          p12-password: ${{ secrets.MAC_CERTS_PASSWORD }}
+
+      - name: Detect signing identity
+        id: signing
+        run: |
+          IDENTITY=$(security find-identity -v -p codesigning | grep "Developer ID Application" | head -1 | sed 's/.*"\(.*\)".*/\1/' || echo "")
+          if [ -n "$IDENTITY" ]; then
+            echo "identity=$IDENTITY" >> $GITHUB_OUTPUT
+            echo "has_identity=true" >> $GITHUB_OUTPUT
+            echo "Found signing identity: $IDENTITY"
+          else
+            echo "has_identity=false" >> $GITHUB_OUTPUT
+            echo "No Developer ID Application identity found, building unsigned"
+          fi
 
       - name: Configure
         run: |
+          SIGNING_ARGS=""
+          if [ "${{ steps.signing.outputs.has_identity }}" = "true" ]; then
+            SIGNING_ARGS="-DIMAGER_SIGNED_APP=ON -DIMAGER_SIGNING_IDENTITY=${{ steps.signing.outputs.identity }}"
+          fi
+
           cmake -S src -B "$BUILD_DIR" -G Ninja \
             -DCMAKE_BUILD_TYPE="$BUILD_TYPE" \
             -DCMAKE_PREFIX_PATH="$Qt6_DIR" \
             -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64" \
             -DENABLE_CHECK_VERSION=OFF \
             -DENABLE_TELEMETRY=OFF \
-            -DIMAGER_SIGNED_APP=OFF
+            $SIGNING_ARGS
 
       - name: Build
         run: cmake --build "$BUILD_DIR" --parallel $(sysctl -n hw.ncpu)
 
       - name: Create DMG
         run: cmake --build "$BUILD_DIR" --target dmg
+
+      - name: Verify code signing
+        if: steps.signing.outputs.has_identity == 'true'
+        run: |
+          echo "========== Post-Build Signing Verification =========="
+          APP_PATH=$(find "$BUILD_DIR" -name "*.app" -maxdepth 1 | head -1)
+          if [ -z "$APP_PATH" ]; then
+            echo "No .app bundle found — skipping verification"
+            exit 0
+          fi
+          echo "App: $APP_PATH"
+
+          echo "--- codesign --verify ---"
+          codesign --verify --deep --strict --verbose=2 "$APP_PATH" 2>&1 && \
+            echo "✅ Signature OK" || echo "❌ Signature FAILED"
+
+          TEAM=$(codesign -dv "$APP_PATH" 2>&1 | grep "TeamIdentifier=" || echo "NONE")
+          echo "  $TEAM"
+          if echo "$TEAM" | grep -q "not set"; then
+            echo "❌ TeamIdentifier not set — signing failed!"
+            exit 1
+          fi
+          echo "========== Signing Verification Complete =========="
 
       - name: Collect artifacts
         run: |
@@ -84,4 +135,3 @@ jobs:
           name: m5stack-imager-macos-universal
           path: dist/*
           if-no-files-found: error
-

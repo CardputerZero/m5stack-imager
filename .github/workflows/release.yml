@@ -148,3 +148,63 @@ jobs:
           echo "✓ Release: https://github.com/$GITHUB_REPOSITORY/releases/tag/$TAG"
         env:
           GH_TOKEN: ${{ github.token }}
+
+  notarize:
+    name: Notarize macOS DMGs
+    needs: release
+    runs-on: macos-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download DMGs from release
+        id: download
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          source .github/scripts/notarize-common.sh
+          download_release_dmgs "${{ needs.release.outputs.tag || steps.info.outputs.tag }}" /tmp/dmgs || {
+            echo "No DMGs found, skipping notarization"
+            echo "skip=true" >> $GITHUB_OUTPUT
+          }
+
+      - name: Submit, wait, and staple
+        if: steps.download.outputs.skip != 'true'
+        id: notarize-step
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          source .github/scripts/notarize-common.sh
+          submit_wait_staple /tmp/dmgs
+          echo "status=$(cat /tmp/notarize-status.txt)" >> $GITHUB_OUTPUT
+
+      - name: Re-upload stapled DMGs
+        if: steps.download.outputs.skip != 'true' && always() && steps.download.outcome == 'success'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          source .github/scripts/notarize-common.sh
+          TAG=$(gh release list --limit 1 --json tagName -q '.[0].tagName')
+          reupload_stapled "$TAG" /tmp/dmgs
+
+      - name: Update release notes
+        if: steps.download.outputs.skip != 'true' && always() && steps.download.outcome == 'success'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          source .github/scripts/notarize-common.sh
+          TAG=$(gh release list --limit 1 --json tagName -q '.[0].tagName')
+
+          if [ "$(cat /tmp/notarize-status.txt 2>/dev/null)" = "true" ]; then
+            update_release_notarization "$TAG" \
+              "✅ Notarized & Stapled" \
+              "> DMG 已包含 Apple 公证票据 (stapled)，离线安装也可通过 Gatekeeper 验证。" \
+              /tmp/notarize-results.md
+          else
+            update_release_notarization "$TAG" \
+              "⚠️ Partially completed" \
+              "> 部分文件未完成公证或 staple，请检查状态后手动运行 notarize workflow。" \
+              /tmp/notarize-results.md
+          fi

@@ -1,0 +1,142 @@
+name: macOS Notarization (Manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: '操作类型'
+        required: true
+        type: choice
+        options:
+          - submit
+          - staple
+      tag:
+        description: 'Release tag (留空 = 最新 release)'
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  notarize:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve release tag
+        id: release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ -n "${{ inputs.tag }}" ]; then
+            TAG="${{ inputs.tag }}"
+          else
+            TAG=$(gh release list --limit 1 --json tagName -q '.[0].tagName')
+          fi
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "Target release: $TAG"
+
+      - name: Download macOS DMGs from release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          source .github/scripts/notarize-common.sh
+          download_release_dmgs "${{ steps.release.outputs.tag }}" /tmp/dmgs
+
+      # ══════════════════════════════════════════════
+      #  SUBMIT: Upload DMGs to Apple for notarization
+      # ══════════════════════════════════════════════
+      - name: "Submit: Send DMGs to Apple"
+        if: inputs.action == 'submit'
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          source .github/scripts/notarize-common.sh
+          submit_only /tmp/dmgs
+
+      - name: "Submit: Update release notes"
+        if: inputs.action == 'submit'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          source .github/scripts/notarize-common.sh
+          update_release_notarization \
+            "${{ steps.release.outputs.tag }}" \
+            "📤 Submitted" \
+            "> 公证已提交至 Apple，通常 5-15 分钟内完成。使用下方命令查询状态，完成后手动运行 **staple** workflow。" \
+            /tmp/notarize-results.md
+
+      # ══════════════════════════════════════════════
+      #  STAPLE: Check status + staple + re-upload
+      # ══════════════════════════════════════════════
+      - name: "Staple: Parse submission IDs from release notes"
+        if: inputs.action == 'staple'
+        id: parse
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release view "${{ steps.release.outputs.tag }}" --json body -q '.body' > /tmp/release-body.md
+          python3 << 'PYEOF'
+          import re, os
+
+          body = open('/tmp/release-body.md').read()
+          pattern = r'`([^`]+\.dmg)`.*?→\s*`([0-9a-f-]{36})`'
+          matches = re.findall(pattern, body)
+
+          if not matches:
+              print("No submission IDs found in release notes")
+              print("Make sure to run 'submit' action first")
+              exit(1)
+
+          print(f"Found {len(matches)} submission(s):")
+          pairs = []
+          for filename, sub_id in matches:
+              print(f"  {filename} -> {sub_id}")
+              pairs.append(f"{filename}={sub_id}")
+
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+              f.write(f"pairs={','.join(pairs)}\n")
+          PYEOF
+
+      - name: "Staple: Check and staple"
+        if: inputs.action == 'staple'
+        id: staple
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          source .github/scripts/notarize-common.sh
+          check_and_staple /tmp/dmgs "${{ steps.parse.outputs.pairs }}"
+          echo "all_ok=$(cat /tmp/notarize-status.txt)" >> $GITHUB_OUTPUT
+
+      - name: "Staple: Re-upload stapled DMGs"
+        if: inputs.action == 'staple' && steps.staple.outputs.all_ok == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          source .github/scripts/notarize-common.sh
+          reupload_stapled "${{ steps.release.outputs.tag }}" /tmp/dmgs
+
+      - name: "Staple: Update release notes"
+        if: inputs.action == 'staple' && always()
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          source .github/scripts/notarize-common.sh
+          TAG="${{ steps.release.outputs.tag }}"
+
+          if [ "${{ steps.staple.outputs.all_ok }}" = "true" ]; then
+            update_release_notarization "$TAG" \
+              "✅ Notarized & Stapled" \
+              "> DMG 已包含 Apple 公证票据 (stapled)，离线安装也可通过 Gatekeeper 验证。" \
+              /tmp/notarize-results.md
+          else
+            update_release_notarization "$TAG" \
+              "⚠️ Partially completed" \
+              "> 部分文件未完成公证或 staple，请检查状态后重新运行 staple workflow。" \
+              /tmp/notarize-results.md
+          fi
