@@ -66,18 +66,25 @@ jobs:
 
       - name: Configure
         run: |
-          SIGNING_ARGS=""
+          QT_PATH="${QT_ROOT_DIR:-$Qt6_DIR}"
+          echo "Using Qt at: $QT_PATH"
+
+          CMAKE_ARGS=(
+            -S src -B "$BUILD_DIR" -G Ninja
+            -DCMAKE_BUILD_TYPE="$BUILD_TYPE"
+            -DCMAKE_PREFIX_PATH="$QT_PATH"
+            -DQt6_ROOT="$QT_PATH"
+            -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64"
+            -DENABLE_CHECK_VERSION=OFF
+            -DENABLE_TELEMETRY=OFF
+          )
+
           if [ "${{ steps.signing.outputs.has_identity }}" = "true" ]; then
-            SIGNING_ARGS="-DIMAGER_SIGNED_APP=ON -DIMAGER_SIGNING_IDENTITY=${{ steps.signing.outputs.identity }}"
+            CMAKE_ARGS+=(-DIMAGER_SIGNED_APP=ON)
+            CMAKE_ARGS+=("-DIMAGER_SIGNING_IDENTITY=${{ steps.signing.outputs.identity }}")
           fi
 
-          cmake -S src -B "$BUILD_DIR" -G Ninja \
-            -DCMAKE_BUILD_TYPE="$BUILD_TYPE" \
-            -DCMAKE_PREFIX_PATH="$Qt6_DIR" \
-            -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64" \
-            -DENABLE_CHECK_VERSION=OFF \
-            -DENABLE_TELEMETRY=OFF \
-            $SIGNING_ARGS
+          cmake "${CMAKE_ARGS[@]}"
 
       - name: Build
         run: cmake --build "$BUILD_DIR" --parallel $(sysctl -n hw.ncpu)
