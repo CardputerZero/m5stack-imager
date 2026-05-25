@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# macOS post-build script for Raspberry Pi Imager
+# macOS post-build script for M5 Imager
 # This script creates a styled DMG for distribution
 
 set -e

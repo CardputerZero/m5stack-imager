@@ -36,8 +36,8 @@
         <translation>禁用警告？</translation>
     </message>
     <message>
-        <source>If you disable warnings, Raspberry Pi Imager will &lt;b&gt;not show confirmation prompts before writing images&lt;/b&gt;. You will still be required to &lt;b&gt;type the exact name&lt;/b&gt; when selecting a system drive.</source>
-        <translation>如果你禁用警告，树莓派启动盘制作工具（Raspberry Pi Imager）将 &lt;b&gt;不会在写入镜像之前显示确认提示&lt;/b&gt;。在选择系统驱动器时，你仍然需要 &lt;b&gt;输入完全相同的名称&lt;/b&gt;。</translation>
+        <source>If you disable warnings, M5 Imager will &lt;b&gt;not show confirmation prompts before writing images&lt;/b&gt;. You will still be required to &lt;b&gt;type the exact name&lt;/b&gt; when selecting a system drive.</source>
+        <translation>如果你禁用警告，树莓派启动盘制作工具（M5 Imager）将 &lt;b&gt;不会在写入镜像之前显示确认提示&lt;/b&gt;。在选择系统驱动器时，你仍然需要 &lt;b&gt;输入完全相同的名称&lt;/b&gt;。</translation>
     </message>
     <message>
         <source>Content Repository</source>
@@ -52,8 +52,8 @@
         <translation>关闭选项对话框且不保存任何更改</translation>
     </message>
     <message>
-        <source>Save the selected options and apply them to Raspberry Pi Imager</source>
-        <translation>保存所选选项并将其应用到树莓派启动盘制作工具（Raspberry Pi Imager）</translation>
+        <source>Save the selected options and apply them to M5 Imager</source>
+        <translation>保存所选选项并将其应用到树莓派启动盘制作工具（M5 Imager）</translation>
     </message>
     <message>
         <source>Keep warnings enabled and return to the options dialog</source>
@@ -72,15 +72,15 @@
         <translation>在写入过程成功完成后自动弹出存储设备</translation>
     </message>
     <message>
-        <source>Send anonymous usage statistics to help improve Raspberry Pi Imager</source>
-        <translation>发送匿名使用统计数据以帮助改进树莓派启动盘制作工具（Raspberry Pi Imager）</translation>
+        <source>Send anonymous usage statistics to help improve M5 Imager</source>
+        <translation>发送匿名使用统计数据以帮助改进树莓派启动盘制作工具（M5 Imager）</translation>
     </message>
     <message>
         <source>Skip confirmation dialogs before writing images (advanced users only)</source>
         <translation>在写入镜像之前跳过确认对话框（仅限高级用户）</translation>
     </message>
     <message>
-        <source>Change the source of operating system images between official Raspberry Pi repository and custom sources</source>
+        <source>Change the source of operating system images between official M5 repository and custom sources</source>
         <translation>在官方树莓派仓库和自定义源之间切换操作系统镜像的来源</translation>
     </message>
     <message>
@@ -674,8 +674,8 @@ You can still write a local image file by pressing Next and selecting &apos;Use 
         <translation>重启系统以应用更改</translation>
     </message>
     <message>
-        <source>Close Raspberry Pi Imager and exit the application</source>
-        <translation>关闭树莓派启动盘制作工具（Raspberry Pi Imager）并退出应用程序</translation>
+        <source>Close M5 Imager and exit the application</source>
+        <translation>关闭树莓派启动盘制作工具（M5 Imager）并退出应用程序</translation>
     </message>
     <message>
         <source>Return to storage selection to write the same image to another storage device</source>
@@ -738,8 +738,8 @@ Please check your network connection and try again.</source>
 <context>
     <name>DownloadThread</name>
     <message>
-        <source>Please verify if &apos;Raspberry Pi Imager&apos; is allowed access to &apos;removable volumes&apos; in privacy settings (under &apos;files and folders&apos; or alternatively give it &apos;full disk access&apos;).</source>
-        <translation>请检查，在隐私设置中是否允许树莓派启动盘制作工具（Raspberry Pi Imager）访问“可移除的宗卷”（位于“文件和文件夹”下），或为其授予“完全磁盘访问权限”。</translation>
+        <source>Please verify if &apos;M5 Imager&apos; is allowed access to &apos;removable volumes&apos; in privacy settings (under &apos;files and folders&apos; or alternatively give it &apos;full disk access&apos;).</source>
+        <translation>请检查，在隐私设置中是否允许树莓派启动盘制作工具（M5 Imager）访问“可移除的宗卷”（位于“文件和文件夹”下），或为其授予“完全磁盘访问权限”。</translation>
     </message>
     <message>
         <source>Cannot open storage device &apos;%1&apos;.</source>
@@ -1725,12 +1725,12 @@ Technical details: %1</source>
         <translation>语言：</translation>
     </message>
     <message>
-        <source>Choose your language for Raspberry Pi Imager</source>
-        <translation>选择树莓派启动盘制作工具（Raspberry Pi Imager）的语言</translation>
+        <source>Choose your language for M5 Imager</source>
+        <translation>选择树莓派启动盘制作工具（M5 Imager）的语言</translation>
     </message>
     <message>
-        <source>Select the language for the Raspberry Pi Imager interface</source>
-        <translation>选择树莓派启动盘制作工具（Raspberry Pi Imager）界面的语言</translation>
+        <source>Select the language for the M5 Imager interface</source>
+        <translation>选择树莓派启动盘制作工具（M5 Imager）界面的语言</translation>
     </message>
 </context>
 <context>
@@ -2014,8 +2014,8 @@ Technical details: %1</source>
 <context>
     <name>QObject</name>
     <message>
-        <source>Raspberry Pi Imager requires elevated privileges to write to storage devices.</source>
-        <translation>树莓派启动盘制作工具（Raspberry Pi Imager）需要提升的权限才能写入存储设备。</translation>
+        <source>M5 Imager requires elevated privileges to write to storage devices.</source>
+        <translation>树莓派启动盘制作工具（M5 Imager）需要提升的权限才能写入存储设备。</translation>
     </message>
     <message>
         <source>Without this, you will encounter permission errors when writing images.</source>
@@ -2188,7 +2188,7 @@ Click &quot;Install Authorization&quot; to set up automatic privilege elevation,
         <translation>选择操作系统镜像的源</translation>
     </message>
     <message>
-        <source>Use the official Raspberry Pi operating system repository</source>
+        <source>Use the official M5 operating system repository</source>
         <translation>使用官方的树莓派操作系统仓库</translation>
     </message>
     <message>
@@ -2571,8 +2571,8 @@ to show system drives.</source>
         <translation>有可用的更新版本。是否要访问网站下载？</translation>
     </message>
     <message>
-        <source>Continue using the current version of Raspberry Pi Imager</source>
-        <translation>继续使用当前版本的树莓派启动盘制作工具（Raspberry Pi Imager）</translation>
+        <source>Continue using the current version of M5 Imager</source>
+        <translation>继续使用当前版本的树莓派启动盘制作工具（M5 Imager）</translation>
     </message>
     <message>
         <source>Open the Raspberry Pi website in your browser to download the latest version</source>
@@ -2920,11 +2920,11 @@ to show system drives.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>You are opening a local Raspberry Pi Imager manifest file. This will replace the current OS list with the contents of this file.</source>
+        <source>You are opening a local M5 Imager manifest file. This will replace the current OS list with the contents of this file.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>A website is requesting to switch Raspberry Pi Imager to use a custom OS repository.
+        <source>A website is requesting to switch M5 Imager to use a custom OS repository.
 
 </source>
         <translation type="unfinished"></translation>
@@ -3156,8 +3156,8 @@ Please check your storage device and try again.</source>
         <translation>选择本地已有的 .img 文件</translation>
     </message>
     <message>
-        <source>Raspberry Pi Imager is still busy. Are you sure you want to quit?</source>
-        <translation>树莓派启动盘制作工具（Raspberry Pi Imager）仍在忙碌中。你确定要退出吗？</translation>
+        <source>M5 Imager is still busy. Are you sure you want to quit?</source>
+        <translation>树莓派启动盘制作工具（M5 Imager）仍在忙碌中。你确定要退出吗？</translation>
     </message>
     <message>
         <source>Storage device removed</source>
@@ -3180,16 +3180,16 @@ Please check your storage device and try again.</source>
         <translation>关闭存储设备移除通知并返回到存储设备选择</translation>
     </message>
     <message>
-        <source>Return to Raspberry Pi Imager and continue the current operation</source>
-        <translation>返回树莓派启动盘制作工具（Raspberry Pi Imager）并继续当前操作</translation>
+        <source>Return to M5 Imager and continue the current operation</source>
+        <translation>返回树莓派启动盘制作工具（M5 Imager）并继续当前操作</translation>
     </message>
     <message>
-        <source>Force quit Raspberry Pi Imager and cancel the current write operation</source>
-        <translation>强制退出树莓派启动盘制作工具（Raspberry Pi Imager）并取消当前写入操作</translation>
+        <source>Force quit M5 Imager and cancel the current write operation</source>
+        <translation>强制退出树莓派启动盘制作工具（M5 Imager）并取消当前写入操作</translation>
     </message>
     <message>
-        <source>Raspberry Pi Imager %1</source>
-        <translation>树莓派启动盘制作工具（Raspberry Pi Imager） %1</translation>
+        <source>M5 Imager %1</source>
+        <translation>树莓派启动盘制作工具（M5 Imager） %1</translation>
     </message>
     <message>
         <source>Insufficient Permissions</source>
@@ -3204,16 +3204,16 @@ Please check your storage device and try again.</source>
         <translation>退出</translation>
     </message>
     <message>
-        <source>Exit Raspberry Pi Imager - you must restart with elevated privileges to write images</source>
-        <translation>退出树莓派启动盘制作工具（Raspberry Pi Imager） - 你必须以更高的权限重新启动才能写入镜像</translation>
+        <source>Exit M5 Imager - you must restart with elevated privileges to write images</source>
+        <translation>退出树莓派启动盘制作工具（M5 Imager） - 你必须以更高的权限重新启动才能写入镜像</translation>
     </message>
     <message>
         <source>Install Authorization</source>
         <translation>安装授权</translation>
     </message>
     <message>
-        <source>Install system authorization to allow Raspberry Pi Imager to run with elevated privileges</source>
-        <translation>安装系统授权以允许提升树莓派启动盘制作工具（Raspberry Pi Imager）的运行权限</translation>
+        <source>Install system authorization to allow M5 Imager to run with elevated privileges</source>
+        <translation>安装系统授权以允许提升树莓派启动盘制作工具（M5 Imager）的运行权限</translation>
     </message>
     <message>
         <source>Save Performance Data</source>

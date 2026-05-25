@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Shared macOS notarization functions for M5Stack Imager
+# Shared macOS notarization functions for M5 Imager
 #
 # Required environment variables (set by caller as needed):
 #   APPLE_ID, APPLE_APP_SPECIFIC_PASSWORD, APPLE_TEAM_ID  — for xcrun notarytool

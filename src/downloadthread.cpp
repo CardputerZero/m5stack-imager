@@ -373,7 +373,7 @@ bool DownloadThread::_openAndPrepareDevice()
 #ifdef Q_OS_DARWIN
         // On macOS, this might be due to permission issues
         QString msg = tr("Error opening disk device '%1'").arg(QString(_filename));
-        msg += "<br>"+tr("Please verify if 'Raspberry Pi Imager' is allowed access to 'removable volumes' in privacy settings (under 'files and folders' or alternatively give it 'full disk access').");
+        msg += "<br>"+tr("Please verify if 'M5 Imager' is allowed access to 'removable volumes' in privacy settings (under 'files and folders' or alternatively give it 'full disk access').");
         QStringList args("x-apple.systempreferences:com.apple.preference.security?Privacy_RemovableVolume");
         QProcess::execute("open", args);
         emit error(msg);

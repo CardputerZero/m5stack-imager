@@ -36,8 +36,8 @@
         <translation>Dezactivez avertismentele?</translation>
     </message>
     <message>
-        <source>If you disable warnings, Raspberry Pi Imager will &lt;b&gt;not show confirmation prompts before writing images&lt;/b&gt;. You will still be required to &lt;b&gt;type the exact name&lt;/b&gt; when selecting a system drive.</source>
-        <translation>Dacă dezactivezi avertismentele, Raspberry Pi Imager &lt;b&gt;nu va mai afișa prompturi de confirmare înainte de a scrie imagini&lt;/b&gt;. Totuși, vei fi obligat să &lt;b&gt;introduci numele exact&lt;/b&gt; când selectezi un drive de sistem.</translation>
+        <source>If you disable warnings, M5 Imager will &lt;b&gt;not show confirmation prompts before writing images&lt;/b&gt;. You will still be required to &lt;b&gt;type the exact name&lt;/b&gt; when selecting a system drive.</source>
+        <translation>Dacă dezactivezi avertismentele, M5 Imager &lt;b&gt;nu va mai afișa prompturi de confirmare înainte de a scrie imagini&lt;/b&gt;. Totuși, vei fi obligat să &lt;b&gt;introduci numele exact&lt;/b&gt; când selectezi un drive de sistem.</translation>
     </message>
     <message>
         <source>Content Repository</source>
@@ -52,8 +52,8 @@
         <translation>Închide dialogul de opțiuni fără a salva modificările</translation>
     </message>
     <message>
-        <source>Save the selected options and apply them to Raspberry Pi Imager</source>
-        <translation>Salvează opțiunile selectate și aplică-le în Raspberry Pi Imager</translation>
+        <source>Save the selected options and apply them to M5 Imager</source>
+        <translation>Salvează opțiunile selectate și aplică-le în M5 Imager</translation>
     </message>
     <message>
         <source>Keep warnings enabled and return to the options dialog</source>
@@ -72,15 +72,15 @@
         <translation>Scoate automat dispozitivul de stocare când procesul de scriere se finalizează cu succes</translation>
     </message>
     <message>
-        <source>Send anonymous usage statistics to help improve Raspberry Pi Imager</source>
-        <translation>Trimite statistici de utilizare anonime pentru a ajuta la îmbunătățirea Raspberry Pi Imager</translation>
+        <source>Send anonymous usage statistics to help improve M5 Imager</source>
+        <translation>Trimite statistici de utilizare anonime pentru a ajuta la îmbunătățirea M5 Imager</translation>
     </message>
     <message>
         <source>Skip confirmation dialogs before writing images (advanced users only)</source>
         <translation>Omită dialogurile de confirmare înainte de scrierea imaginilor (doar pentru utilizatori avansați)</translation>
     </message>
     <message>
-        <source>Change the source of operating system images between official Raspberry Pi repository and custom sources</source>
+        <source>Change the source of operating system images between official M5 repository and custom sources</source>
         <translation>Schimbă sursa imaginilor de sistem de operare între depozitul oficial Raspberry Pi și surse personalizate</translation>
     </message>
     <message>
@@ -674,8 +674,8 @@ You can still write a local image file by pressing Next and selecting &apos;Use 
         <translation>Repornește sistemul pentru a aplica modificările</translation>
     </message>
     <message>
-        <source>Close Raspberry Pi Imager and exit the application</source>
-        <translation>Închide Raspberry Pi Imager și ieși din aplicație</translation>
+        <source>Close M5 Imager and exit the application</source>
+        <translation>Închide M5 Imager și ieși din aplicație</translation>
     </message>
     <message>
         <source>Return to storage selection to write the same image to another storage device</source>
@@ -738,8 +738,8 @@ Please check your network connection and try again.</source>
 <context>
     <name>DownloadThread</name>
     <message>
-        <source>Please verify if &apos;Raspberry Pi Imager&apos; is allowed access to &apos;removable volumes&apos; in privacy settings (under &apos;files and folders&apos; or alternatively give it &apos;full disk access&apos;).</source>
-        <translation>Te rog verifică dacă &apos;Raspberry Pi Imager&apos; are acces la &apos;volumele removable&apos; în setările de confidențialitate (sub &apos;fișiere și foldere&apos; sau alternativ acordă-i &apos;acces complet la disc&apos;).</translation>
+        <source>Please verify if &apos;M5 Imager&apos; is allowed access to &apos;removable volumes&apos; in privacy settings (under &apos;files and folders&apos; or alternatively give it &apos;full disk access&apos;).</source>
+        <translation>Te rog verifică dacă &apos;M5 Imager&apos; are acces la &apos;volumele removable&apos; în setările de confidențialitate (sub &apos;fișiere și foldere&apos; sau alternativ acordă-i &apos;acces complet la disc&apos;).</translation>
     </message>
     <message>
         <source>Cannot open storage device &apos;%1&apos;.</source>
@@ -1725,12 +1725,12 @@ Technical details: %1</source>
         <translation>Limbă:</translation>
     </message>
     <message>
-        <source>Choose your language for Raspberry Pi Imager</source>
-        <translation>Alege limba pentru Raspberry Pi Imager</translation>
+        <source>Choose your language for M5 Imager</source>
+        <translation>Alege limba pentru M5 Imager</translation>
     </message>
     <message>
-        <source>Select the language for the Raspberry Pi Imager interface</source>
-        <translation>Selectează limba pentru interfața Raspberry Pi Imager</translation>
+        <source>Select the language for the M5 Imager interface</source>
+        <translation>Selectează limba pentru interfața M5 Imager</translation>
     </message>
 </context>
 <context>
@@ -2014,8 +2014,8 @@ Technical details: %1</source>
 <context>
     <name>QObject</name>
     <message>
-        <source>Raspberry Pi Imager requires elevated privileges to write to storage devices.</source>
-        <translation>Raspberry Pi Imager necesită privilegii ridicate pentru a scrie pe dispozitivele de stocare.</translation>
+        <source>M5 Imager requires elevated privileges to write to storage devices.</source>
+        <translation>M5 Imager necesită privilegii ridicate pentru a scrie pe dispozitivele de stocare.</translation>
     </message>
     <message>
         <source>Without this, you will encounter permission errors when writing images.</source>
@@ -2186,7 +2186,7 @@ Click &quot;Install Authorization&quot; to set up automatic privilege elevation,
         <translation>Alege sursa pentru imaginile de sistem de operare</translation>
     </message>
     <message>
-        <source>Use the official Raspberry Pi operating system repository</source>
+        <source>Use the official M5 operating system repository</source>
         <translation>Folosește depozitul oficial de sisteme de operare Raspberry Pi</translation>
     </message>
     <message>
@@ -2571,8 +2571,8 @@ pentru a afișa drive-uri de sistem.</translation>
         <translation>Există o versiune mai nouă de Imager disponibilă. Dorești să vizitezi site-ul pentru a o descărca?</translation>
     </message>
     <message>
-        <source>Continue using the current version of Raspberry Pi Imager</source>
-        <translation>Continuă să folosești versiunea curentă de Raspberry Pi Imager</translation>
+        <source>Continue using the current version of M5 Imager</source>
+        <translation>Continuă să folosești versiunea curentă de M5 Imager</translation>
     </message>
     <message>
         <source>Open the Raspberry Pi website in your browser to download the latest version</source>
@@ -2920,11 +2920,11 @@ pentru a afișa drive-uri de sistem.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>You are opening a local Raspberry Pi Imager manifest file. This will replace the current OS list with the contents of this file.</source>
+        <source>You are opening a local M5 Imager manifest file. This will replace the current OS list with the contents of this file.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>A website is requesting to switch Raspberry Pi Imager to use a custom OS repository.
+        <source>A website is requesting to switch M5 Imager to use a custom OS repository.
 
 </source>
         <translation type="unfinished"></translation>
@@ -3156,8 +3156,8 @@ Please check your storage device and try again.</source>
         <translation>Selectează un .img personalizat de pe computerul tău</translation>
     </message>
     <message>
-        <source>Raspberry Pi Imager is still busy. Are you sure you want to quit?</source>
-        <translation>Raspberry Pi Imager este încă ocupat. Ești sigur că vrei să ieși?</translation>
+        <source>M5 Imager is still busy. Are you sure you want to quit?</source>
+        <translation>M5 Imager este încă ocupat. Ești sigur că vrei să ieși?</translation>
     </message>
     <message>
         <source>Storage device removed</source>
@@ -3180,16 +3180,16 @@ Please check your storage device and try again.</source>
         <translation>Închide notificarea de stocare îndepărtat și revino la selecția de stocare</translation>
     </message>
     <message>
-        <source>Return to Raspberry Pi Imager and continue the current operation</source>
-        <translation>Revino la Raspberry Pi Imager și continuă operația curentă</translation>
+        <source>Return to M5 Imager and continue the current operation</source>
+        <translation>Revino la M5 Imager și continuă operația curentă</translation>
     </message>
     <message>
-        <source>Force quit Raspberry Pi Imager and cancel the current write operation</source>
-        <translation>Forțează ieșirea din Raspberry Pi Imager și anulează operația curentă de scriere</translation>
+        <source>Force quit M5 Imager and cancel the current write operation</source>
+        <translation>Forțează ieșirea din M5 Imager și anulează operația curentă de scriere</translation>
     </message>
     <message>
-        <source>Raspberry Pi Imager %1</source>
-        <translation>Raspberry Pi Imager %1</translation>
+        <source>M5 Imager %1</source>
+        <translation>M5 Imager %1</translation>
     </message>
     <message>
         <source>Insufficient Permissions</source>
@@ -3204,15 +3204,15 @@ Please check your storage device and try again.</source>
         <translation>Ieșire</translation>
     </message>
     <message>
-        <source>Exit Raspberry Pi Imager - you must restart with elevated privileges to write images</source>
-        <translation>Ieși din Raspberry Pi Imager - trebuie să repornești cu privilegii ridicate pentru a scrie imagini</translation>
+        <source>Exit M5 Imager - you must restart with elevated privileges to write images</source>
+        <translation>Ieși din M5 Imager - trebuie să repornești cu privilegii ridicate pentru a scrie imagini</translation>
     </message>
     <message>
         <source>Install Authorization</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Install system authorization to allow Raspberry Pi Imager to run with elevated privileges</source>
+        <source>Install system authorization to allow M5 Imager to run with elevated privileges</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

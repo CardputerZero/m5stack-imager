@@ -37,7 +37,7 @@ MacFile::authOpenResult MacFile::authOpen(const QByteArray &filename)
     
     // Create authorization environment with custom prompt
     // This provides better context in the authorization dialog
-    QString promptText = QCoreApplication::translate("MacFile", "Raspberry Pi Imager needs to access the disk to write the image.");
+    QString promptText = QCoreApplication::translate("MacFile", "M5 Imager needs to access the disk to write the image.");
     QByteArray promptBytes = promptText.toUtf8();
     const char *promptKey = "prompt";
     AuthorizationItem envItems[] = {

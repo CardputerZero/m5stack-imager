@@ -6,7 +6,7 @@
 set -e
 
 # Configuration  
-APP_NAME="Raspberry Pi Imager"
+APP_NAME="M5 Imager"
 PROJECT_NAME="@CMAKE_PROJECT_NAME@"
 SOURCE_APP_PATH="@CMAKE_BINARY_DIR@/${PROJECT_NAME}.app"
 DMG_APP_PATH="@CMAKE_BINARY_DIR@/${APP_NAME}.app"
@@ -173,7 +173,7 @@ echo "Creating DMG with create-dmg..."
 # Build create-dmg command
 CREATE_DMG_CMD=(
     create-dmg
-    --volname "Raspberry Pi Imager @IMAGER_VERSION_STR@"
+    --volname "M5 Imager @IMAGER_VERSION_STR@"
     --window-pos 200 120
     --window-size 600 400
     --icon-size 128

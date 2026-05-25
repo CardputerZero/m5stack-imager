@@ -1416,8 +1416,8 @@ Item {
         Text {
             id: repoBodyText
             text: repositoryUrlDialog.isLocalFile
-                ? qsTr("You are opening a local Raspberry Pi Imager manifest file. This will replace the current OS list with the contents of this file.")
-                : qsTr("A website is requesting to switch Raspberry Pi Imager to use a custom OS repository.\n\n") +
+                ? qsTr("You are opening a local M5 Imager manifest file. This will replace the current OS list with the contents of this file.")
+                : qsTr("A website is requesting to switch M5 Imager to use a custom OS repository.\n\n") +
                   qsTr("Only accept if you trust this source and intentionally clicked a link to open this repository.")
             font.pointSize: Style.fontSizeFormLabel
             font.family: Style.fontFamily

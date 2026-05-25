@@ -161,7 +161,7 @@ jobs:
             fi
             gh release create "$TAG" final-assets/* \
               --repo "$GITHUB_REPOSITORY" \
-              --title "M5Stack Imager $TAG" \
+              --title "M5 Imager $TAG" \
               --generate-notes \
               $PRERELEASE_FLAG
           fi

@@ -4,7 +4,7 @@ Priority: optional
 Maintainer: Tom Dewey <tom.dewey@raspberrypi.com>
 Build-Depends: debhelper-compat (= 13), cmake, libgnutls28-dev, dh-exec
 Standards-Version: 4.1.2
-Homepage: https://www.raspberrypi.com/software
+Homepage: https://github.com/CardputerZero/m5stack-imager
 
 Package: rpi-imager
 Build-Profiles: <desktop>
@@ -14,8 +14,8 @@ Depends: ${shlibs:Depends}, ${misc:Depends}, dosfstools, fdisk, fuse, libfuse2,
          libfontconfig1, libx11-6, libegl1, libgl1
 Recommends: udisks2
 Conflicts: rpi-imager-embedded
-Description: Raspberry Pi Imaging utility
- A user-friendly tool for creating bootable media for Raspberry Pi Devices.
+Description: M5 Imager utility
+ A user-friendly tool for creating bootable media for M5 devices.
 
 Package: rpi-imager-embedded
 Build-Profiles: <embedded>
@@ -25,11 +25,11 @@ Depends: ${shlibs:Depends}, ${misc:Depends},
          libinput10, libudev1, openssl
 Suggests: rpi-eeprom, firmware-brcm80211
 Conflicts: rpi-imager
-Description: Raspberry Pi Imaging utility for embedded systems
- A user-friendly tool for creating bootable media for Raspberry Pi devices,
+Description: M5 Imager utility for embedded systems
+ A user-friendly tool for creating bootable media for M5 devices,
  optimized for embedded systems.
  .
- This version is specifically designed for Raspberry Pi embedded systems:
+ This version is specifically designed for embedded M5 workflows:
   - Uses linuxfb for direct rendering (no desktop environment required)
   - Optimized for network-based installation
   - Smaller memory footprint for embedded applications
@@ -41,8 +41,8 @@ Architecture: amd64 arm64 armhf
 Depends: ${shlibs:Depends}, ${misc:Depends}, 
          dosfstools, fdisk, fuse, libfuse2, util-linux (>= 2.37)
 Conflicts: rpi-imager, rpi-imager-embedded
-Description: Raspberry Pi Imaging utility (command-line only)
- A command-line tool for creating bootable media for Raspberry Pi devices.
+Description: M5 Imager utility (command-line only)
+ A command-line tool for creating bootable media for M5 devices.
  .
  This version is optimized for command-line operation:
   - No GUI components - CLI mode only

@@ -1,17 +1,16 @@
-# M5Stack Imager
+# M5 Imager
 
-M5Stack Imager is an M5Stack-oriented fork of Raspberry Pi Imager for writing
-operating-system images to M5Stack Raspberry Pi devices such as CM4Stack and
-CardputerZero.
+M5 Imager is an M5Stack-oriented fork of `raspberrypi/rpi-imager` for writing
+operating-system images to M5Stack devices such as CM4Stack and CardputerZero.
 
 This repository currently keeps the upstream Qt/C++ writing engine, removable
 drive handling, checksum verification, OS customisation flow, and Compute
-Module USB boot support from Raspberry Pi Imager. The first M5Stack-specific
+Module USB boot support from upstream. The first M5Stack-specific
 layer is the default branding, telemetry policy, and OS repository structure.
 
 ## Preview
 
-![M5Stack Imager screenshot](screenshot_m5stack.png)
+![M5 Imager screenshot](screenshot_m5stack.png)
 
 ## Upstream
 
@@ -95,8 +94,8 @@ The workflows run on `push`, `pull_request`, and manual `workflow_dispatch`.
 Tagged builds also upload artifacts to the matching GitHub Release. The Windows
 workflow produces:
 
-- `M5Stack-Imager-<version>-windows-x64-installer.exe`
-- `M5Stack-Imager-<version>-windows-x64-portable.zip`
+- `M5-Imager-<version>-windows-x64-installer.exe`
+- `M5-Imager-<version>-windows-x64-portable.zip`
 
 To publish a GitHub Release, push a version tag:
 

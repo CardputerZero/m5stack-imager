@@ -36,8 +36,8 @@
         <translation>경고를 비활성화하시겠습니까?</translation>
     </message>
     <message>
-        <source>If you disable warnings, Raspberry Pi Imager will &lt;b&gt;not show confirmation prompts before writing images&lt;/b&gt;. You will still be required to &lt;b&gt;type the exact name&lt;/b&gt; when selecting a system drive.</source>
-        <translation>경고를 비활성화하면 Raspberry Pi Imager는 &lt;b&gt;이미지를 기록하기 전에 확인 프롬프트를 표시하지 않습니다&lt;/b&gt;. 시스템 드라이브를 선택할 때 여전히 &lt;b&gt;정확한 이름을 입력&lt;/b&gt;해야 합니다.</translation>
+        <source>If you disable warnings, M5 Imager will &lt;b&gt;not show confirmation prompts before writing images&lt;/b&gt;. You will still be required to &lt;b&gt;type the exact name&lt;/b&gt; when selecting a system drive.</source>
+        <translation>경고를 비활성화하면 M5 Imager는 &lt;b&gt;이미지를 기록하기 전에 확인 프롬프트를 표시하지 않습니다&lt;/b&gt;. 시스템 드라이브를 선택할 때 여전히 &lt;b&gt;정확한 이름을 입력&lt;/b&gt;해야 합니다.</translation>
     </message>
     <message>
         <source>Content Repository</source>
@@ -52,8 +52,8 @@
         <translation>변경 사항을 저장하지 않고 옵션 대화 상자를 닫습니다</translation>
     </message>
     <message>
-        <source>Save the selected options and apply them to Raspberry Pi Imager</source>
-        <translation>선택한 옵션을 저장하고 Raspberry Pi Imager에 적용합니다</translation>
+        <source>Save the selected options and apply them to M5 Imager</source>
+        <translation>선택한 옵션을 저장하고 M5 Imager에 적용합니다</translation>
     </message>
     <message>
         <source>Keep warnings enabled and return to the options dialog</source>
@@ -72,7 +72,7 @@
         <translation>쓰기 프로세스가 성공적으로 완료되면 저장 장치를 자동으로 꺼냅니다</translation>
     </message>
     <message>
-        <source>Send anonymous usage statistics to help improve Raspberry Pi Imager</source>
+        <source>Send anonymous usage statistics to help improve M5 Imager</source>
         <translation>익명 사용 통계를 보내어 라즈베리 파이 이미저를 개선하는 데 도움을 줍니다</translation>
     </message>
     <message>
@@ -80,7 +80,7 @@
         <translation>이미지를 기록하기 전에 확인 대화 상자를 건너뛰기 (고급 사용자 전용)</translation>
     </message>
     <message>
-        <source>Change the source of operating system images between official Raspberry Pi repository and custom sources</source>
+        <source>Change the source of operating system images between official M5 repository and custom sources</source>
         <translation>운영 체제 이미지 소스를 공식 라즈베리 파이 저장소와 사용자 정의 소스 간에 변경합니다</translation>
     </message>
     <message>
@@ -674,7 +674,7 @@ You can still write a local image file by pressing Next and selecting &apos;Use 
         <translation>변경 사항을 적용하려면 시스템을 재부팅하십시오</translation>
     </message>
     <message>
-        <source>Close Raspberry Pi Imager and exit the application</source>
+        <source>Close M5 Imager and exit the application</source>
         <translation>라즈베리 파이 이미저를 닫고 애플리케이션을 종료합니다</translation>
     </message>
     <message>
@@ -738,8 +738,8 @@ Please check your network connection and try again.</source>
 <context>
     <name>DownloadThread</name>
     <message>
-        <source>Please verify if &apos;Raspberry Pi Imager&apos; is allowed access to &apos;removable volumes&apos; in privacy settings (under &apos;files and folders&apos; or alternatively give it &apos;full disk access&apos;).</source>
-        <translation>&apos;Raspberry Pi Imager&apos;가 개인 정보 설정(&apos;파일 및 폴더&apos;에서 또는 &apos;전체 디스크 액세스&apos;를 부여)에서 &apos;제거 가능한 볼륨&apos;에 접근할 수 있는지 확인하세요</translation>
+        <source>Please verify if &apos;M5 Imager&apos; is allowed access to &apos;removable volumes&apos; in privacy settings (under &apos;files and folders&apos; or alternatively give it &apos;full disk access&apos;).</source>
+        <translation>&apos;M5 Imager&apos;가 개인 정보 설정(&apos;파일 및 폴더&apos;에서 또는 &apos;전체 디스크 액세스&apos;를 부여)에서 &apos;제거 가능한 볼륨&apos;에 접근할 수 있는지 확인하세요</translation>
     </message>
     <message>
         <source>Cannot open storage device &apos;%1&apos;.</source>
@@ -1726,11 +1726,11 @@ Technical details: %1</source>
         <translation>언어:</translation>
     </message>
     <message>
-        <source>Choose your language for Raspberry Pi Imager</source>
+        <source>Choose your language for M5 Imager</source>
         <translation>라즈베리 파이 이미저에 사용할 언어를 선택하세요</translation>
     </message>
     <message>
-        <source>Select the language for the Raspberry Pi Imager interface</source>
+        <source>Select the language for the M5 Imager interface</source>
         <translation>라즈베리 파이 이미저 인터페이스에 사용할 언어를 선택하세요</translation>
     </message>
 </context>
@@ -2015,7 +2015,7 @@ Technical details: %1</source>
 <context>
     <name>QObject</name>
     <message>
-        <source>Raspberry Pi Imager requires elevated privileges to write to storage devices.</source>
+        <source>M5 Imager requires elevated privileges to write to storage devices.</source>
         <translation>라즈베리 파이 이미저는 저장 장치에 기록하려면 관리자 권한이 필요합니다</translation>
     </message>
     <message>
@@ -2189,7 +2189,7 @@ Click &quot;Install Authorization&quot; to set up automatic privilege elevation,
         <translation>운영 체제 이미지 소스를 선택하세요</translation>
     </message>
     <message>
-        <source>Use the official Raspberry Pi operating system repository</source>
+        <source>Use the official M5 operating system repository</source>
         <translation>공식 라즈베리 파이 운영 체제 저장소를 사용합니다</translation>
     </message>
     <message>
@@ -2572,7 +2572,7 @@ to show system drives.</source>
         <translation>Imager의 새 버전이 있습니다. 웹사이트를 방문해 다운로드하시겠습니까?</translation>
     </message>
     <message>
-        <source>Continue using the current version of Raspberry Pi Imager</source>
+        <source>Continue using the current version of M5 Imager</source>
         <translation>현재 버전의 라즈베리 파이 이미저를 계속 사용합니다</translation>
     </message>
     <message>
@@ -2917,11 +2917,11 @@ to show system drives.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>You are opening a local Raspberry Pi Imager manifest file. This will replace the current OS list with the contents of this file.</source>
+        <source>You are opening a local M5 Imager manifest file. This will replace the current OS list with the contents of this file.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>A website is requesting to switch Raspberry Pi Imager to use a custom OS repository.
+        <source>A website is requesting to switch M5 Imager to use a custom OS repository.
 
 </source>
         <translation type="unfinished"></translation>
@@ -3153,7 +3153,7 @@ Please check your storage device and try again.</source>
         <translation>컴퓨터에서 사용자 지정 .img를 선택합니다.</translation>
     </message>
     <message>
-        <source>Raspberry Pi Imager is still busy. Are you sure you want to quit?</source>
+        <source>M5 Imager is still busy. Are you sure you want to quit?</source>
         <translation>라즈베리 파이 이미저가 아직 실행 중입니다. 정말 종료하시겠습니까?</translation>
     </message>
     <message>
@@ -3177,15 +3177,15 @@ Please check your storage device and try again.</source>
         <translation>저장 장치 제거 알림을 닫고 저장소 선택으로 돌아갑니다</translation>
     </message>
     <message>
-        <source>Return to Raspberry Pi Imager and continue the current operation</source>
+        <source>Return to M5 Imager and continue the current operation</source>
         <translation>라즈베리 파이 이미저로 돌아가 현재 작업을 계속합니다</translation>
     </message>
     <message>
-        <source>Force quit Raspberry Pi Imager and cancel the current write operation</source>
+        <source>Force quit M5 Imager and cancel the current write operation</source>
         <translation>라즈베리 파이 이미저를 강제 종료하고 현재 쓰기 작업을 취소합니다</translation>
     </message>
     <message>
-        <source>Raspberry Pi Imager %1</source>
+        <source>M5 Imager %1</source>
         <translation>라즈베리 파이 이미저 %1</translation>
     </message>
     <message>
@@ -3201,7 +3201,7 @@ Please check your storage device and try again.</source>
         <translation>종료</translation>
     </message>
     <message>
-        <source>Exit Raspberry Pi Imager - you must restart with elevated privileges to write images</source>
+        <source>Exit M5 Imager - you must restart with elevated privileges to write images</source>
         <translation>라즈베리 파이 이미저를 종료합니다. 이미지 기록을 위해 관리자 권한으로 실행해야 합니다</translation>
     </message>
     <message>
@@ -3209,7 +3209,7 @@ Please check your storage device and try again.</source>
         <translation>권한 설치</translation>
     </message>
     <message>
-        <source>Install system authorization to allow Raspberry Pi Imager to run with elevated privileges</source>
+        <source>Install system authorization to allow M5 Imager to run with elevated privileges</source>
         <translation>라즈베리 파이 이미저가 관리자 권한으로 실행될 수 있도록 시스템 권한을 설치합니다</translation>
     </message>
     <message>

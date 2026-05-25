@@ -6,7 +6,7 @@ if(BUILD_CLI_ONLY)
 else()
     # GUI build: create app bundle
     # Set application name with proper spacing
-    set(APP_NAME "M5Stack Imager")
+    set(APP_NAME "M5 Imager")
 
     # Set all required bundle properties
     set(MACOSX_BUNDLE_BUNDLE_NAME "${APP_NAME}")

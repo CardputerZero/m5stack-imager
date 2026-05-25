@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Script to generate DMG background image for Raspberry Pi Imager
+# Script to generate DMG background image for M5 Imager
 # This script will create a background image or provide instructions
 
 set -e
@@ -69,7 +69,7 @@ try:
     
     # Create a simple HTML file that we can screenshot
     # Include version in title if provided
-    title_text = "Raspberry Pi Imager"
+    title_text = "M5 Imager"
     if len(sys.argv) > 2 and sys.argv[2]:
         title_text += f" {sys.argv[2]}"
     
@@ -182,7 +182,7 @@ echo "1. Install Python 3 and Pillow: pip3 install Pillow"
 echo "2. Run: python3 $SCRIPT_DIR/create_dmg_background.py $OUTPUT_PATH"
 echo ""
 echo "Or create a 600x400 PNG image manually with:"
-echo "- Title: 'Raspberry Pi Imager'"
+echo "- Title: 'M5 Imager'"
 echo "- Instruction: 'Drag the app to Applications to install'"
 echo "- Visual guides for app and Applications folder positions"
 echo ""

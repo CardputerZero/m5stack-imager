@@ -1,5 +1,5 @@
 [Unit]
-Description=Start Raspberry Pi Embedded Imager on bootup
+Description=Start M5 Imager embedded mode on bootup
 
 [Service]
 Type=oneshot

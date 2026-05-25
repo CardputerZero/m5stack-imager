@@ -1,7 +1,7 @@
 [Desktop Entry]
 Type=Application
-Name=Raspberry Pi Imager (CLI)
-Comment=Raspberry Pi Imager command-line interface
+Name=M5 Imager (CLI)
+Comment=M5 Imager command-line interface
 Exec=rpi-imager-cli
 Icon=rpi-imager
 Categories=System;

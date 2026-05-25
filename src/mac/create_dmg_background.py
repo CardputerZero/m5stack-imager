@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Script to create a stylized background image for the Raspberry Pi Imager DMG.
+Script to create a stylized background image for the M5 Imager DMG.
 This creates a background that guides users to drag the app to Applications.
 """
 
@@ -72,9 +72,9 @@ def create_dmg_background(output_path="dmg_background.png", version_str="", widt
     
     # Draw title with version if provided
     if version_str:
-        title_text = f"Raspberry Pi Imager {version_str}"
+        title_text = f"M5 Imager {version_str}"
     else:
-        title_text = "Raspberry Pi Imager"
+        title_text = "M5 Imager"
     
     title_bbox = draw.textbbox((0, 0), title_text, font=title_font)
     title_width = title_bbox[2] - title_bbox[0]

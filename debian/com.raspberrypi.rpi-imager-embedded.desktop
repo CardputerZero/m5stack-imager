@@ -1,8 +1,8 @@
 [Desktop Entry]
 Version=1.0
 Type=Application
-Name=Raspberry Pi Imager (Embedded)
-Comment=Raspberry Pi Imager for embedded systems
+Name=M5 Imager (Embedded)
+Comment=M5 Imager for embedded systems
 Exec=rpi-imager-embedded
 Icon=rpi-imager
 Terminal=false

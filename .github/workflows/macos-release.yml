@@ -147,7 +147,7 @@ jobs:
             exit 1
           fi
 
-          cp "$dmg_file" "dist/M5Stack-Imager-${version}-macos-universal.dmg"
+          cp "$dmg_file" "dist/M5-Imager-${version}-macos-universal.dmg"
           ls -la dist/
 
       - name: Upload workflow artifact

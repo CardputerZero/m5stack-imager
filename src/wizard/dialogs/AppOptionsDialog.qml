@@ -157,7 +157,7 @@ BaseDialog {
                 id: editRepoButton
                 text: qsTr("Content Repository")
                 btnText: qsTr("Edit")
-                accessibleDescription: qsTr("Change the source of operating system images between official Raspberry Pi repository and custom sources")
+                accessibleDescription: qsTr("Change the source of operating system images between official M5 repository and custom sources")
                 Layout.fillWidth: true
                 // Disable while write is in progress to prevent changing source during write
                 enabled: imageWriter.writeState === ImageWriter.Idle ||
@@ -253,7 +253,7 @@ BaseDialog {
             ImOptionPill {
                 id: chkTelemetry
                 text: qsTr("Enable anonymous statistics (telemetry)")
-                accessibleDescription: qsTr("Send anonymous usage statistics to help improve Raspberry Pi Imager")
+                accessibleDescription: qsTr("Send anonymous usage statistics to help improve M5 Imager")
                 helpLabel: imageWriter.isEmbeddedMode() ? "" : qsTr("What is this?")
                 helpUrl: imageWriter.isEmbeddedMode() ? "" : "https://github.com/raspberrypi/rpi-imager?tab=readme-ov-file#anonymous-metrics-telemetry"
                 Layout.fillWidth: true
@@ -309,7 +309,7 @@ BaseDialog {
             ImButtonRed {
                 id: saveButton
                 text: qsTr("Save")
-                accessibleDescription: qsTr("Save the selected options and apply them to Raspberry Pi Imager")
+                accessibleDescription: qsTr("Save the selected options and apply them to M5 Imager")
                 Layout.minimumWidth: Style.buttonWidthMinimum
                 activeFocusOnTab: true
                 onClicked: {
@@ -478,7 +478,7 @@ BaseDialog {
             font.family: Style.fontFamily
             color: Style.textDescriptionColor
             Layout.fillWidth: true
-            text: qsTr("If you disable warnings, Raspberry Pi Imager will <b>not show confirmation prompts before writing images</b>. You will still be required to <b>type the exact name</b> when selecting a system drive.")
+            text: qsTr("If you disable warnings, M5 Imager will <b>not show confirmation prompts before writing images</b>. You will still be required to <b>type the exact name</b> when selecting a system drive.")
             Accessible.role: Accessible.StaticText
             Accessible.name: text.replace(/<[^>]+>/g, '')  // Strip HTML tags for accessibility
             Accessible.focusable: popup.imageWriter ? popup.imageWriter.isScreenReaderActive() : false

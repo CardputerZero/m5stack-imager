@@ -40,7 +40,7 @@
   <array>
     <dict>
       <key>CFBundleURLName</key>
-      <string>Raspberry Pi Imager URL</string>
+      <string>M5 Imager URL</string>
       <key>CFBundleURLSchemes</key>
       <array>
         <string>rpi-imager</string>
@@ -52,7 +52,7 @@
   <array>
     <dict>
       <key>CFBundleTypeName</key>
-      <string>Raspberry Pi Imager Manifest</string>
+      <string>M5 Imager Manifest</string>
       <key>CFBundleTypeRole</key>
       <string>Viewer</string>
       <key>LSHandlerRank</key>
@@ -69,7 +69,7 @@
       <key>UTTypeIdentifier</key>
       <string>com.raspberrypi.rpi-imager-manifest</string>
       <key>UTTypeDescription</key>
-      <string>Raspberry Pi Imager Manifest</string>
+      <string>M5 Imager Manifest</string>
       <key>UTTypeConformsTo</key>
       <array>
         <string>public.json</string>

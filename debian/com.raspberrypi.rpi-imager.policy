@@ -4,12 +4,12 @@
  "http://www.freedesktop.org/standards/PolicyKit/1.0/policyconfig.dtd">
 <policyconfig>
 
-  <vendor>Raspberry Pi Ltd</vendor>
-  <vendor_url>https://www.raspberrypi.com/</vendor_url>
+  <vendor>M5Stack</vendor>
+  <vendor_url>https://m5stack.com/</vendor_url>
 
   <action id="com.raspberrypi.rpi-imager.run">
-    <description>Run Raspberry Pi Imager</description>
-    <message>Authentication is required to run Raspberry Pi Imager</message>
+    <description>Run M5 Imager</description>
+    <message>Authentication is required to run M5 Imager</message>
     <icon_name>rpi-imager</icon_name>
     <defaults>
       <allow_any>auth_admin</allow_any>
@@ -21,4 +21,3 @@
   </action>
 
 </policyconfig>
-

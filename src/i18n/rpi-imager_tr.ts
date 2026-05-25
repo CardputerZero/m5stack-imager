@@ -36,8 +36,8 @@
         <translation>Uyarılar devre dışı bırakılsın mı?</translation>
     </message>
     <message>
-        <source>If you disable warnings, Raspberry Pi Imager will &lt;b&gt;not show confirmation prompts before writing images&lt;/b&gt;. You will still be required to &lt;b&gt;type the exact name&lt;/b&gt; when selecting a system drive.</source>
-        <translation>Uyarıları devre dışı bırakırsanız, Raspberry Pi Imager &lt;b&gt;görüntüleri yazmadan önce onay istemeyecektir&lt;/b&gt;. Bir sistem sürücüsü seçerken yine de &lt;b&gt;tam adını yazmanız&lt;/b&gt; gerekecektir.</translation>
+        <source>If you disable warnings, M5 Imager will &lt;b&gt;not show confirmation prompts before writing images&lt;/b&gt;. You will still be required to &lt;b&gt;type the exact name&lt;/b&gt; when selecting a system drive.</source>
+        <translation>Uyarıları devre dışı bırakırsanız, M5 Imager &lt;b&gt;görüntüleri yazmadan önce onay istemeyecektir&lt;/b&gt;. Bir sistem sürücüsü seçerken yine de &lt;b&gt;tam adını yazmanız&lt;/b&gt; gerekecektir.</translation>
     </message>
     <message>
         <source>Content Repository</source>
@@ -52,8 +52,8 @@
         <translation>Değişiklikleri kaydetmeden seçenekler penceresini kapat</translation>
     </message>
     <message>
-        <source>Save the selected options and apply them to Raspberry Pi Imager</source>
-        <translation>Seçilen seçenekleri kaydet ve Raspberry Pi Imager&apos;a uygula</translation>
+        <source>Save the selected options and apply them to M5 Imager</source>
+        <translation>Seçilen seçenekleri kaydet ve M5 Imager&apos;a uygula</translation>
     </message>
     <message>
         <source>Keep warnings enabled and return to the options dialog</source>
@@ -72,15 +72,15 @@
         <translation>Yazma işlemi başarıyla tamamlandığında depolama cihazını otomatik olarak çıkart</translation>
     </message>
     <message>
-        <source>Send anonymous usage statistics to help improve Raspberry Pi Imager</source>
-        <translation>Raspberry Pi Imager&apos;ı geliştirmeye yardımcı olmak için anonim kullanım istatistikleri gönder</translation>
+        <source>Send anonymous usage statistics to help improve M5 Imager</source>
+        <translation>M5 Imager&apos;ı geliştirmeye yardımcı olmak için anonim kullanım istatistikleri gönder</translation>
     </message>
     <message>
         <source>Skip confirmation dialogs before writing images (advanced users only)</source>
         <translation>Yazma öncesi onay iletişim kutularını atla (Yalnızca ileri düzey kullanıcılar)</translation>
     </message>
     <message>
-        <source>Change the source of operating system images between official Raspberry Pi repository and custom sources</source>
+        <source>Change the source of operating system images between official M5 repository and custom sources</source>
         <translation>İşletim sistemi görüntülerinin kaynağını resmi depo ve özel kaynaklar arasında değiştir</translation>
     </message>
     <message>
@@ -676,8 +676,8 @@ Yine de &apos;İleri&apos; düğmesine basıp sonraki ekranda &apos;Özel kullan
         <translation>Değişiklikleri uygulamak için sistemi yeniden başlatın</translation>
     </message>
     <message>
-        <source>Close Raspberry Pi Imager and exit the application</source>
-        <translation>Raspberry Pi Imager&apos;ı kapat ve uygulamadan çık</translation>
+        <source>Close M5 Imager and exit the application</source>
+        <translation>M5 Imager&apos;ı kapat ve uygulamadan çık</translation>
     </message>
     <message>
         <source>Return to storage selection to write the same image to another storage device</source>
@@ -754,8 +754,8 @@ Lütfen ağ bağlantınızı kontrol edin ve tekrar deneyin.</translation>
 <context>
     <name>DownloadThread</name>
     <message>
-        <source>Please verify if &apos;Raspberry Pi Imager&apos; is allowed access to &apos;removable volumes&apos; in privacy settings (under &apos;files and folders&apos; or alternatively give it &apos;full disk access&apos;).</source>
-        <translation>Lütfen &apos;Raspberry Pi Imager&apos;ın gizlilik ayarlarında (&apos;dosyalar ve klasörler&apos; altında veya alternatif olarak &apos;tam disk erişimi&apos;) &apos;çıkarılabilir birimlere erişim&apos; izni verilip verilmediğini doğrulayın.</translation>
+        <source>Please verify if &apos;M5 Imager&apos; is allowed access to &apos;removable volumes&apos; in privacy settings (under &apos;files and folders&apos; or alternatively give it &apos;full disk access&apos;).</source>
+        <translation>Lütfen &apos;M5 Imager&apos;ın gizlilik ayarlarında (&apos;dosyalar ve klasörler&apos; altında veya alternatif olarak &apos;tam disk erişimi&apos;) &apos;çıkarılabilir birimlere erişim&apos; izni verilip verilmediğini doğrulayın.</translation>
     </message>
     <message>
         <source>Cannot open storage device &apos;%1&apos;.</source>
@@ -1804,12 +1804,12 @@ Teknik detaylar: %1</translation>
         <translation>Dil:</translation>
     </message>
     <message>
-        <source>Choose your language for Raspberry Pi Imager</source>
-        <translation>Raspberry Pi Imager için dilinizi seçin</translation>
+        <source>Choose your language for M5 Imager</source>
+        <translation>M5 Imager için dilinizi seçin</translation>
     </message>
     <message>
-        <source>Select the language for the Raspberry Pi Imager interface</source>
-        <translation>Raspberry Pi Imager arayüzü için dili seçin</translation>
+        <source>Select the language for the M5 Imager interface</source>
+        <translation>M5 Imager arayüzü için dili seçin</translation>
     </message>
 </context>
 <context>
@@ -2093,8 +2093,8 @@ Teknik detaylar: %1</translation>
 <context>
     <name>QObject</name>
     <message>
-        <source>Raspberry Pi Imager requires elevated privileges to write to storage devices.</source>
-        <translation>Raspberry Pi Imager, depolama aygıtlarına yazmak için yüksek ayrıcalıklar gerektirir.</translation>
+        <source>M5 Imager requires elevated privileges to write to storage devices.</source>
+        <translation>M5 Imager, depolama aygıtlarına yazmak için yüksek ayrıcalıklar gerektirir.</translation>
     </message>
     <message>
         <source>Without this, you will encounter permission errors when writing images.</source>
@@ -2267,7 +2267,7 @@ Otomatik ayrıcalık yükseltmeyi ayarlamak için &quot;Yetkilendirmeyi Yükle&q
         <translation>İşletim sistemi imajları için kaynak seçin</translation>
     </message>
     <message>
-        <source>Use the official Raspberry Pi operating system repository</source>
+        <source>Use the official M5 operating system repository</source>
         <translation>Resmi Raspberry Pi işletim sistemi deposunu kullan</translation>
     </message>
     <message>
@@ -2652,8 +2652,8 @@ Sistem sürücülerini göstermek için aşağıdaki
         <translation>Imager&apos;ın daha yeni bir sürümü mevcut. İndirmek için web sitesini ziyaret etmek ister misiniz?</translation>
     </message>
     <message>
-        <source>Continue using the current version of Raspberry Pi Imager</source>
-        <translation>Raspberry Pi Imager&apos;ın mevcut sürümünü kullanmaya devam et</translation>
+        <source>Continue using the current version of M5 Imager</source>
+        <translation>M5 Imager&apos;ın mevcut sürümünü kullanmaya devam et</translation>
     </message>
     <message>
         <source>Open the Raspberry Pi website in your browser to download the latest version</source>
@@ -3001,14 +3001,14 @@ Sistem sürücülerini göstermek için aşağıdaki
         <translation>Özel bir depoya geçilsin mi?</translation>
     </message>
     <message>
-        <source>You are opening a local Raspberry Pi Imager manifest file. This will replace the current OS list with the contents of this file.</source>
-        <translation>Yerel bir Raspberry Pi Imager manifest dosyası açıyorsunuz. Bu işlem, mevcut işletim sistemi listesini bu dosyanın içeriğiyle değiştirecektir.</translation>
+        <source>You are opening a local M5 Imager manifest file. This will replace the current OS list with the contents of this file.</source>
+        <translation>Yerel bir M5 Imager manifest dosyası açıyorsunuz. Bu işlem, mevcut işletim sistemi listesini bu dosyanın içeriğiyle değiştirecektir.</translation>
     </message>
     <message>
-        <source>A website is requesting to switch Raspberry Pi Imager to use a custom OS repository.
+        <source>A website is requesting to switch M5 Imager to use a custom OS repository.
 
 </source>
-        <translation>Bir web sitesi, Raspberry Pi Imager'ın özel bir işletim sistemi deposu kullanmasını talep ediyor.
+        <translation>Bir web sitesi, M5 Imager'ın özel bir işletim sistemi deposu kullanmasını talep ediyor.
 
 </translation>
     </message>
@@ -3241,8 +3241,8 @@ Lütfen depolama aygıtınızı kontrol edin ve tekrar deneyin.</translation>
         <translation>Bilgisayarınızdan özel bir .img seçin</translation>
     </message>
     <message>
-        <source>Raspberry Pi Imager is still busy. Are you sure you want to quit?</source>
-        <translation>Raspberry Pi Imager hâlâ meşgul. Çıkmak istediğinize emin misiniz?</translation>
+        <source>M5 Imager is still busy. Are you sure you want to quit?</source>
+        <translation>M5 Imager hâlâ meşgul. Çıkmak istediğinize emin misiniz?</translation>
     </message>
     <message>
         <source>Storage device removed</source>
@@ -3265,16 +3265,16 @@ Lütfen depolama aygıtınızı kontrol edin ve tekrar deneyin.</translation>
         <translation>Depolama çıkarıldı bildirimini kapat ve depolama seçimine dön</translation>
     </message>
     <message>
-        <source>Return to Raspberry Pi Imager and continue the current operation</source>
-        <translation>Raspberry Pi Imager&apos;a dön ve mevcut işleme devam et</translation>
+        <source>Return to M5 Imager and continue the current operation</source>
+        <translation>M5 Imager&apos;a dön ve mevcut işleme devam et</translation>
     </message>
     <message>
-        <source>Force quit Raspberry Pi Imager and cancel the current write operation</source>
-        <translation>Raspberry Pi Imager&apos;dan çıkmaya zorla ve mevcut yazma işlemini iptal et</translation>
+        <source>Force quit M5 Imager and cancel the current write operation</source>
+        <translation>M5 Imager&apos;dan çıkmaya zorla ve mevcut yazma işlemini iptal et</translation>
     </message>
     <message>
-        <source>Raspberry Pi Imager %1</source>
-        <translation>Raspberry Pi Imager %1</translation>
+        <source>M5 Imager %1</source>
+        <translation>M5 Imager %1</translation>
     </message>
     <message>
         <source>Insufficient Permissions</source>
@@ -3289,16 +3289,16 @@ Lütfen depolama aygıtınızı kontrol edin ve tekrar deneyin.</translation>
         <translation>Çıkış</translation>
     </message>
     <message>
-        <source>Exit Raspberry Pi Imager - you must restart with elevated privileges to write images</source>
-        <translation>Raspberry Pi Imager&apos;dan çık - imaj yazmak için yönetici ayrıcalıklarıyla yeniden başlatmalısınız</translation>
+        <source>Exit M5 Imager - you must restart with elevated privileges to write images</source>
+        <translation>M5 Imager&apos;dan çık - imaj yazmak için yönetici ayrıcalıklarıyla yeniden başlatmalısınız</translation>
     </message>
     <message>
         <source>Install Authorization</source>
         <translation>Yetkilendirmeyi Yükle</translation>
     </message>
     <message>
-        <source>Install system authorization to allow Raspberry Pi Imager to run with elevated privileges</source>
-        <translation>Raspberry Pi Imager&apos;ın yüksek ayrıcalıklarla çalışmasına izin vermek için sistem yetkilendirmesini yükleyin</translation>
+        <source>Install system authorization to allow M5 Imager to run with elevated privileges</source>
+        <translation>M5 Imager&apos;ın yüksek ayrıcalıklarla çalışmasına izin vermek için sistem yetkilendirmesini yükleyin</translation>
     </message>
     <message>
         <source>Save Performance Data</source>

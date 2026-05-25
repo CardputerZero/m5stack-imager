@@ -1,4 +1,4 @@
-# Inno Setup Installer for Raspberry Pi Imager
+# Inno Setup Installer for M5 Imager
 
 This directory contains the necessary files to build a Windows installer using Inno Setup, which is a widely-used, free installer system for Windows applications.
 

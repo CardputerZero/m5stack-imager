@@ -74,7 +74,7 @@ jobs:
             exit 1
           fi
 
-          cp "$APPIMAGE" "dist/M5Stack-Imager-${version}-linux-x64.AppImage"
+          cp "$APPIMAGE" "dist/M5-Imager-${version}-linux-x64.AppImage"
           ls -lh dist/
 
       - name: Upload workflow artifact
@@ -139,7 +139,7 @@ jobs:
             exit 1
           fi
 
-          cp "$APPIMAGE" "dist/M5Stack-Imager-${version}-linux-arm64.AppImage"
+          cp "$APPIMAGE" "dist/M5-Imager-${version}-linux-arm64.AppImage"
           ls -lh dist/
 
       - name: Upload workflow artifact

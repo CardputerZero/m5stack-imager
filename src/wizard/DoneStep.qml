@@ -298,7 +298,7 @@ WizardStepBase {
         ImButtonRed {
             id: finishButton
             text: imageWriter.isEmbeddedMode() ? qsTr("Reboot") : CommonStrings.finish
-            accessibleDescription: imageWriter.isEmbeddedMode() ? qsTr("Reboot the system to apply changes") : qsTr("Close Raspberry Pi Imager and exit the application")
+            accessibleDescription: imageWriter.isEmbeddedMode() ? qsTr("Reboot the system to apply changes") : qsTr("Close M5 Imager and exit the application")
             enabled: true
             activeFocusOnTab: true
             Layout.minimumWidth: Style.buttonWidthMinimum

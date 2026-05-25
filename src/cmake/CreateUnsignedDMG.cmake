@@ -2,7 +2,7 @@
 #
 # Expected -D inputs:
 #   VERSION_VARS_FILE — path to imager_version_vars.cmake
-#   APP_NAME          — display name (e.g. "Raspberry Pi Imager")
+#   APP_NAME          — display name (e.g. "M5 Imager")
 #   APP_BUNDLE_PATH   — path to .app bundle
 #   BUILD_DIR         — CMAKE_BINARY_DIR
 

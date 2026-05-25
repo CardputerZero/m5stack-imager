@@ -78,7 +78,7 @@ cat > "$HTML_FILE" << 'EOF'
     </style>
 </head>
 <body>
-    <div class="title">Raspberry Pi Imager${VERSION_STR:+ $VERSION_STR}</div>
+    <div class="title">M5 Imager${VERSION_STR:+ $VERSION_STR}</div>
     <div class="circle app"></div>
     <div class="circle apps"></div>
     <div class="chevron">›</div>

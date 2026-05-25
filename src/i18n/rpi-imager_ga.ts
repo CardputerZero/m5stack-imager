@@ -36,8 +36,8 @@
         <translation>Díchumasaigh rabhaidh?</translation>
     </message>
     <message>
-        <source>If you disable warnings, Raspberry Pi Imager will &lt;b&gt;not show confirmation prompts before writing images&lt;/b&gt;. You will still be required to &lt;b&gt;type the exact name&lt;/b&gt; when selecting a system drive.</source>
-        <translation>Mura ndéanann tú rabhaidh a dhíchumasú, &lt;b&gt;ní thaispeánfaidh Raspberry Pi Imager leideanna deimhnithe sula scríobhfar íomhánna&lt;/b&gt;. Beidh ort fós &lt;b&gt;an t-ainm cruinn a chlóscríobh&lt;/b&gt; agus tiomántán córais á roghnú agat.</translation>
+        <source>If you disable warnings, M5 Imager will &lt;b&gt;not show confirmation prompts before writing images&lt;/b&gt;. You will still be required to &lt;b&gt;type the exact name&lt;/b&gt; when selecting a system drive.</source>
+        <translation>Mura ndéanann tú rabhaidh a dhíchumasú, &lt;b&gt;ní thaispeánfaidh M5 Imager leideanna deimhnithe sula scríobhfar íomhánna&lt;/b&gt;. Beidh ort fós &lt;b&gt;an t-ainm cruinn a chlóscríobh&lt;/b&gt; agus tiomántán córais á roghnú agat.</translation>
     </message>
     <message>
         <source>Content Repository</source>
@@ -52,8 +52,8 @@
         <translation>Dún an dialóg roghanna gan aon athruithe a shábháil</translation>
     </message>
     <message>
-        <source>Save the selected options and apply them to Raspberry Pi Imager</source>
-        <translation>Sábháil na roghanna roghnaithe agus cuir i bhfeidhm iad ar Raspberry Pi Imager</translation>
+        <source>Save the selected options and apply them to M5 Imager</source>
+        <translation>Sábháil na roghanna roghnaithe agus cuir i bhfeidhm iad ar M5 Imager</translation>
     </message>
     <message>
         <source>Keep warnings enabled and return to the options dialog</source>
@@ -72,15 +72,15 @@
         <translation>Díbirt an gléas stórála go huathoibríoch nuair a bheidh an próiseas scríbhneoireachta críochnaithe go rathúil</translation>
     </message>
     <message>
-        <source>Send anonymous usage statistics to help improve Raspberry Pi Imager</source>
-        <translation>Seol staitisticí úsáide gan ainm chun cabhrú le Raspberry Pi Imager a fheabhsú</translation>
+        <source>Send anonymous usage statistics to help improve M5 Imager</source>
+        <translation>Seol staitisticí úsáide gan ainm chun cabhrú le M5 Imager a fheabhsú</translation>
     </message>
     <message>
         <source>Skip confirmation dialogs before writing images (advanced users only)</source>
         <translation>Seachain dialóga deimhnithe sula scríobhtar íomhánna (d'úsáideoirí ardleibhéil amháin)</translation>
     </message>
     <message>
-        <source>Change the source of operating system images between official Raspberry Pi repository and custom sources</source>
+        <source>Change the source of operating system images between official M5 repository and custom sources</source>
         <translation>Athraigh foinse íomhánna an chórais oibriúcháin idir stór oifigiúil Raspberry Pi agus foinsí saincheaptha</translation>
     </message>
     <message>
@@ -676,8 +676,8 @@ Is féidir leat comhad íomhá áitiúil a scríobh fós trí bhrú ar Ar Aghaid
         <translation>Atosaigh an córas chun na hathruithe a chur i bhfeidhm</translation>
     </message>
     <message>
-        <source>Close Raspberry Pi Imager and exit the application</source>
-        <translation>Dún Raspberry Pi Imager agus scoir an feidhmchlár</translation>
+        <source>Close M5 Imager and exit the application</source>
+        <translation>Dún M5 Imager agus scoir an feidhmchlár</translation>
     </message>
     <message>
         <source>Return to storage selection to write the same image to another storage device</source>
@@ -754,8 +754,8 @@ Seiceáil do nasc líonra agus déan iarracht arís.</translation>
 <context>
     <name>DownloadThread</name>
     <message>
-        <source>Please verify if 'Raspberry Pi Imager' is allowed access to 'removable volumes' in privacy settings (under 'files and folders' or alternatively give it 'full disk access').</source>
-        <translation>Deimhnigh le do thoil an bhfuil cead ag 'Raspberry Pi Imager' rochtain a fháil ar 'imleabhair inbhainte' i socruithe príobháideachta (faoi 'comhaid agus fillteáin' nó tabhair 'rochtain iomlán ar dhiosca' dó.</translation>
+        <source>Please verify if 'M5 Imager' is allowed access to 'removable volumes' in privacy settings (under 'files and folders' or alternatively give it 'full disk access').</source>
+        <translation>Deimhnigh le do thoil an bhfuil cead ag 'M5 Imager' rochtain a fháil ar 'imleabhair inbhainte' i socruithe príobháideachta (faoi 'comhaid agus fillteáin' nó tabhair 'rochtain iomlán ar dhiosca' dó.</translation>
     </message>
     <message>
         <source>Cannot open storage device '%1'.</source>
@@ -1804,12 +1804,12 @@ Sonraí teicniúla: %1</translation>
         <translation>Teanga:</translation>
     </message>
     <message>
-        <source>Choose your language for Raspberry Pi Imager</source>
-        <translation>Roghnaigh do theanga le haghaidh Raspberry Pi Imager</translation>
+        <source>Choose your language for M5 Imager</source>
+        <translation>Roghnaigh do theanga le haghaidh M5 Imager</translation>
     </message>
     <message>
-        <source>Select the language for the Raspberry Pi Imager interface</source>
-        <translation>Roghnaigh an teanga don chomhéadan Raspberry Pi Imager</translation>
+        <source>Select the language for the M5 Imager interface</source>
+        <translation>Roghnaigh an teanga don chomhéadan M5 Imager</translation>
     </message>
 </context>
 <context>
@@ -2093,8 +2093,8 @@ Sonraí teicniúla: %1</translation>
 <context>
     <name>QObject</name>
     <message>
-        <source>Raspberry Pi Imager requires elevated privileges to write to storage devices.</source>
-        <translation>Éilíonn Raspberry Pi Imager pribhléidí ardaithe chun scríobh chuig gléasanna stórála.</translation>
+        <source>M5 Imager requires elevated privileges to write to storage devices.</source>
+        <translation>Éilíonn M5 Imager pribhléidí ardaithe chun scríobh chuig gléasanna stórála.</translation>
     </message>
     <message>
         <source>Without this, you will encounter permission errors when writing images.</source>
@@ -2267,7 +2267,7 @@ Cliceáil "Suiteáil Údarú" chun ardú uathoibríoch pribhléide a shocrú, n�
         <translation>Roghnaigh an fhoinse le haghaidh íomhánna an chórais oibriúcháin</translation>
     </message>
     <message>
-        <source>Use the official Raspberry Pi operating system repository</source>
+        <source>Use the official M5 operating system repository</source>
         <translation>Bain úsáid as stór oifigiúil chóras oibriúcháin Raspberry Pi</translation>
     </message>
     <message>
@@ -2652,8 +2652,8 @@ chun tiomántáin chórais a thaispeáint.</translation>
         <translation>Tá leagan níos nuaí de Imager ar fáil. Ar mhaith leat cuairt a thabhairt ar an suíomh Gréasáin chun é a íoslódáil?</translation>
     </message>
     <message>
-        <source>Continue using the current version of Raspberry Pi Imager</source>
-        <translation>Lean ort ag úsáid an leagan reatha de Raspberry Pi Imager</translation>
+        <source>Continue using the current version of M5 Imager</source>
+        <translation>Lean ort ag úsáid an leagan reatha de M5 Imager</translation>
     </message>
     <message>
         <source>Open the Raspberry Pi website in your browser to download the latest version</source>
@@ -3001,14 +3001,14 @@ chun tiomántáin chórais a thaispeáint.</translation>
         <translation>Athraigh go stórlann saincheaptha?</translation>
     </message>
     <message>
-        <source>You are opening a local Raspberry Pi Imager manifest file. This will replace the current OS list with the contents of this file.</source>
-        <translation>Tá comhad manifíse áitiúil Raspberry Pi Imager á oscailt agat. Cuirfidh sé seo ábhar an chomhaid seo in ionad an liosta OS reatha.</translation>
+        <source>You are opening a local M5 Imager manifest file. This will replace the current OS list with the contents of this file.</source>
+        <translation>Tá comhad manifíse áitiúil M5 Imager á oscailt agat. Cuirfidh sé seo ábhar an chomhaid seo in ionad an liosta OS reatha.</translation>
     </message>
     <message>
-        <source>A website is requesting to switch Raspberry Pi Imager to use a custom OS repository.
+        <source>A website is requesting to switch M5 Imager to use a custom OS repository.
 
 </source>
-        <translation>Tá suíomh Gréasáin ag iarraidh Raspberry Pi Imager a athrú chun stórlann oibriúcháin saincheaptha a úsáid.
+        <translation>Tá suíomh Gréasáin ag iarraidh M5 Imager a athrú chun stórlann oibriúcháin saincheaptha a úsáid.
 
 </translation>
     </message>
@@ -3241,8 +3241,8 @@ Seiceáil do ghléas stórála agus déan iarracht arís.</translation>
         <translation>Roghnaigh .img saincheaptha ó do ríomhaire</translation>
     </message>
     <message>
-        <source>Raspberry Pi Imager is still busy. Are you sure you want to quit?</source>
-        <translation>Tá Raspberry Pi Imager fós gnóthach. An bhfuil tú cinnte gur mhaith leat éirí as?</translation>
+        <source>M5 Imager is still busy. Are you sure you want to quit?</source>
+        <translation>Tá M5 Imager fós gnóthach. An bhfuil tú cinnte gur mhaith leat éirí as?</translation>
     </message>
     <message>
         <source>Storage device removed</source>
@@ -3265,15 +3265,15 @@ Seiceáil do ghléas stórála agus déan iarracht arís.</translation>
         <translation>Dún an fógra maidir leis an stóráil a baineadh agus fill ar ais chuig an rogha stórála</translation>
     </message>
     <message>
-        <source>Return to Raspberry Pi Imager and continue the current operation</source>
+        <source>Return to M5 Imager and continue the current operation</source>
         <translation>Fill ar ais chuig Íomháitheoir Raspberry Pi agus lean ar aghaidh leis an oibríocht reatha</translation>
     </message>
     <message>
-        <source>Force quit Raspberry Pi Imager and cancel the current write operation</source>
-        <translation>Éigeantach scor de Raspberry Pi Imager agus cealaigh an oibríocht scríbhneoireachta reatha</translation>
+        <source>Force quit M5 Imager and cancel the current write operation</source>
+        <translation>Éigeantach scor de M5 Imager agus cealaigh an oibríocht scríbhneoireachta reatha</translation>
     </message>
     <message>
-        <source>Raspberry Pi Imager %1</source>
+        <source>M5 Imager %1</source>
         <translation>Íomháitheoir Raspberry Pi %1</translation>
     </message>
     <message>
@@ -3289,16 +3289,16 @@ Seiceáil do ghléas stórála agus déan iarracht arís.</translation>
         <translation>Scoir</translation>
     </message>
     <message>
-        <source>Exit Raspberry Pi Imager - you must restart with elevated privileges to write images</source>
-        <translation>Scoir Raspberry Pi Imager - ní mór duit atosú le pribhléidí ardaithe chun íomhánna a scríobh</translation>
+        <source>Exit M5 Imager - you must restart with elevated privileges to write images</source>
+        <translation>Scoir M5 Imager - ní mór duit atosú le pribhléidí ardaithe chun íomhánna a scríobh</translation>
     </message>
     <message>
         <source>Install Authorization</source>
         <translation>Údarú Suiteála</translation>
     </message>
     <message>
-        <source>Install system authorization to allow Raspberry Pi Imager to run with elevated privileges</source>
-        <translation>Suiteáil údarú córais chun ligean do Raspberry Pi Imager rith le pribhléidí ardaithe</translation>
+        <source>Install system authorization to allow M5 Imager to run with elevated privileges</source>
+        <translation>Suiteáil údarú córais chun ligean do M5 Imager rith le pribhléidí ardaithe</translation>
     </message>
     <message>
         <source>Save Performance Data</source>

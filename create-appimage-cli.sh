@@ -184,7 +184,7 @@ BUILD_TYPE="MinSizeRel"  # Optimize for size
 
 # Location of AppDir and output file
 APPDIR="$PWD/AppDir-cli-$ARCH"
-OUTPUT_FILE="$PWD/Raspberry_Pi_Imager-${GIT_VERSION}-cli-${ARCH}.AppImage"
+OUTPUT_FILE="$PWD/M5_Imager-${GIT_VERSION}-cli-${ARCH}.AppImage"
 
 # Tools directory for downloaded binaries
 TOOLS_DIR="$PWD/appimage-tools"
@@ -358,8 +358,8 @@ if [ -n "$LINUXDEPLOY" ] && [ -f "$LINUXDEPLOY" ]; then
     rm -f "$APPDIR/usr/lib/libsystemd"*
 
     # Rename the output file from linuxdeploy's default name to our versioned name
-    # linuxdeploy creates: Raspberry_Pi_Imager_(CLI)-${ARCH}.AppImage (based on Name= in desktop file)
-    LINUXDEPLOY_OUTPUT="Raspberry_Pi_Imager_(CLI)-${ARCH}.AppImage"
+    # linuxdeploy creates: M5_Imager_(CLI)-${ARCH}.AppImage (based on Name= in desktop file)
+    LINUXDEPLOY_OUTPUT="M5_Imager_(CLI)-${ARCH}.AppImage"
     if [ -f "$LINUXDEPLOY_OUTPUT" ]; then
         echo "Renaming '$LINUXDEPLOY_OUTPUT' to '$(basename "$OUTPUT_FILE")'"
         mv "$LINUXDEPLOY_OUTPUT" "$OUTPUT_FILE"
@@ -402,7 +402,7 @@ if [ -f "$OUTPUT_FILE" ]; then
     
     # Show size comparison if desktop AppImage exists
     # Desktop AppImage uses GIT_VERSION and has -desktop- suffix
-    REGULAR_APPIMAGE="$PWD/Raspberry_Pi_Imager-${GIT_VERSION}-desktop-${ARCH}.AppImage"
+    REGULAR_APPIMAGE="$PWD/M5_Imager-${GIT_VERSION}-desktop-${ARCH}.AppImage"
     if [ -f "$REGULAR_APPIMAGE" ]; then
         CLI_SIZE=$(stat -f%z "$OUTPUT_FILE" 2>/dev/null || stat -c%s "$OUTPUT_FILE" 2>/dev/null || echo "unknown")
         REGULAR_SIZE=$(stat -f%z "$REGULAR_APPIMAGE" 2>/dev/null || stat -c%s "$REGULAR_APPIMAGE" 2>/dev/null || echo "unknown")

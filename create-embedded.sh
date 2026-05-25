@@ -198,7 +198,7 @@ BUILD_TYPE="MinSizeRel"  # Optimize for size in embedded systems
 
 # Location of AppDir and output file
 APPDIR="$PWD/AppDir-embedded-$ARCH"
-OUTPUT_FILE="$PWD/Raspberry_Pi_Imager-${GIT_VERSION}-embedded-${ARCH}.AppImage"
+OUTPUT_FILE="$PWD/M5_Imager-${GIT_VERSION}-embedded-${ARCH}.AppImage"
 
 # Tools directory for downloaded binaries
 TOOLS_DIR="$PWD/appimage-tools"
@@ -295,8 +295,8 @@ rm -f "$APPDIR/usr/share/applications/"*.desktop
 # Copy and modify the embedded desktop file
 cp "debian/com.raspberrypi.rpi-imager.desktop" "$APPDIR/usr/share/applications/com.raspberrypi.rpi-imager-embedded.desktop"
 # Update the desktop file for embedded use (preserve %F for file arguments)
-sed -i 's|Name=.*|Name=Raspberry Pi Imager (Embedded)|' "$APPDIR/usr/share/applications/com.raspberrypi.rpi-imager-embedded.desktop"
-sed -i 's|Comment=.*|Comment=Raspberry Pi Imager for embedded systems|' "$APPDIR/usr/share/applications/com.raspberrypi.rpi-imager-embedded.desktop"
+sed -i 's|Name=.*|Name=M5 Imager (Embedded)|' "$APPDIR/usr/share/applications/com.raspberrypi.rpi-imager-embedded.desktop"
+sed -i 's|Comment=.*|Comment=M5 Imager for embedded systems|' "$APPDIR/usr/share/applications/com.raspberrypi.rpi-imager-embedded.desktop"
 sed -i 's|Exec=.*|Exec=rpi-imager-embedded %F|' "$APPDIR/usr/share/applications/com.raspberrypi.rpi-imager-embedded.desktop"
 
 # Create the AppRun file
@@ -769,8 +769,8 @@ if [ -n "$LINUXDEPLOY" ] && [ -f "$LINUXDEPLOY" ]; then
     rm -f "$APPDIR/usr/lib/libsystemd"*
 
     # Rename the output file from linuxdeploy's default name to our versioned name
-    # linuxdeploy creates: Raspberry_Pi_Imager_(Embedded)-${ARCH}.AppImage (based on Name= in desktop file)
-    LINUXDEPLOY_OUTPUT="Raspberry_Pi_Imager_(Embedded)-${ARCH}.AppImage"
+    # linuxdeploy creates: M5_Imager_(Embedded)-${ARCH}.AppImage (based on Name= in desktop file)
+    LINUXDEPLOY_OUTPUT="M5_Imager_(Embedded)-${ARCH}.AppImage"
     if [ -f "$LINUXDEPLOY_OUTPUT" ]; then
         echo "Renaming '$LINUXDEPLOY_OUTPUT' to '$(basename "$OUTPUT_FILE")'"
         mv "$LINUXDEPLOY_OUTPUT" "$OUTPUT_FILE"

@@ -101,9 +101,9 @@ jobs:
             throw "No Windows installer was produced"
           }
 
-          Copy-Item $installer.FullName "dist\M5Stack-Imager-$version-windows-x64-installer.exe"
+          Copy-Item $installer.FullName "dist\M5-Imager-$version-windows-x64-installer.exe"
           Compress-Archive -Path "$env:GITHUB_WORKSPACE\$env:BUILD_DIR\deploy\*" `
-            -DestinationPath "dist\M5Stack-Imager-$version-windows-x64-portable.zip" `
+            -DestinationPath "dist\M5-Imager-$version-windows-x64-portable.zip" `
             -Force
           Get-ChildItem dist
 

@@ -139,10 +139,10 @@ int main(int argc, char *argv[])
             g_logFile = fopen(logPath, "a");
             if (g_logFile) {
 #ifdef Q_OS_UNIX
-                fprintf(g_logFile, "\n=== M5Stack Imager started (PID %d, EUID %d) ===\n",
+                fprintf(g_logFile, "\n=== M5 Imager started (PID %d, EUID %d) ===\n",
                         getpid(), geteuid());
 #else
-                fprintf(g_logFile, "\n=== M5Stack Imager started ===\n");
+                fprintf(g_logFile, "\n=== M5 Imager started ===\n");
 #endif
                 fflush(g_logFile);
                 qInstallMessageHandler(fileLogHandler);
@@ -225,7 +225,7 @@ int main(int argc, char *argv[])
 
     app.setOrganizationName("M5Stack");
     app.setOrganizationDomain("m5stack.com");
-    app.setApplicationName("M5Stack Imager");
+    app.setApplicationName("M5 Imager");
     app.setApplicationVersion(ImageWriter::staticVersion());
     app.setWindowIcon(QIcon(":/icons/rpi-imager.ico"));
 
@@ -328,7 +328,7 @@ int main(int argc, char *argv[])
     int cliRefreshJitter = -1;
 
     QCommandLineParser parser;
-    parser.setApplicationDescription("M5Stack Imager GUI");
+    parser.setApplicationDescription("M5 Imager GUI");
     parser.addHelpOption();
     parser.addVersionOption();
     parser.addOptions({
@@ -755,7 +755,7 @@ int main(int argc, char *argv[])
     if (hasPermissionIssue)
     {
         // Common message parts to reduce translation effort
-        QString header = QObject::tr("Raspberry Pi Imager requires elevated privileges to write to storage devices.");
+        QString header = QObject::tr("M5 Imager requires elevated privileges to write to storage devices.");
         QString footer = QObject::tr("Without this, you will encounter permission errors when writing images.");
         QString statusAndAction = {};
 

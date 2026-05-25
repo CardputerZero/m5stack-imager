@@ -45,7 +45,7 @@ GnomeSuspendInhibitor::GnomeSuspendInhibitor()
 
                 QDBusReply<unsigned int> reply;
 
-                reply = sessionManagerInterface.call("Inhibit", "Raspberry Pi Imager", xid, "Imaging", flags);
+                reply = sessionManagerInterface.call("Inhibit", "M5 Imager", xid, "Imaging", flags);
 
                 _cookie = reply.value();
             }
@@ -266,7 +266,7 @@ ProcessScopedSuspendInhibitor::~ProcessScopedSuspendInhibitor()
 
 LinuxSuspendInhibitor::LinuxSuspendInhibitor()
     : _kdeInhibitor("kde-inhibit", {"--power", "--screen"}),
-      _systemdInhibitor("systemd-inhibit", {"--what=idle:sleep", "--who=Raspberry Pi Imager"})
+      _systemdInhibitor("systemd-inhibit", {"--what=idle:sleep", "--who=M5 Imager"})
 {
 }
 

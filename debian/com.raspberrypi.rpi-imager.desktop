@@ -1,10 +1,10 @@
 [Desktop Entry]
 Type=Application
 Version=1.5
-Name=M5Stack Imager
-Name[zh_CN]=树莓派启动盘制作工具
-Comment=Tool for writing OS images for M5Stack Raspberry Pi devices
-Comment[zh_CN]=将镜像写入SD卡的树莓派工具
+Name=M5 Imager
+Name[zh_CN]=M5 Imager
+Comment=Tool for writing OS images for M5 devices
+Comment[zh_CN]=用于将系统镜像写入 M5 设备启动介质的工具
 Icon=rpi-imager
 Exec=/usr/bin/rpi-imager %u
 Categories=Utility;
