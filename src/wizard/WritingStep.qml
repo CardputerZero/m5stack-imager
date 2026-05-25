@@ -589,7 +589,7 @@ WizardStepBase {
                 var bytesWrittenMB = Math.round(now / (1024 * 1024))
                 progressText.text = qsTr("Writing... %1 MB written").arg(bytesWrittenMB)
             } else {
-                var progress = total > 0 ? (now / total) * 100 : 0
+                var progress = total > 0 ? Math.min((now / total) * 100, 100) : 0
                 progressBar.value = progress
                 progressText.text = qsTr("Writing... %1%").arg(Math.round(progress))
             }
@@ -599,7 +599,7 @@ WizardStepBase {
     function onVerifyProgress(now, total) {
         if (root.isWriting) {
             root.operationWarning = ""  // Clear write warnings during verification
-            var progress = total > 0 ? (now / total) * 100 : 0
+            var progress = total > 0 ? Math.min((now / total) * 100, 100) : 0
             progressBar.value = progress
             progressText.text = qsTr("Verifying... %1%").arg(Math.round(progress))
         }
