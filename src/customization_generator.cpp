@@ -4,6 +4,7 @@
  */
 
 #include "customization_generator.h"
+#include "systemd_firstrun_paths.h"
 #include <QPasswordDigestor>
 #include <QCryptographicHash>
 #include <QRegularExpression>
@@ -60,10 +61,16 @@ QString CustomisationGenerator::yamlEscapeString(const QString& value) {
     return result;
 }
 
-QByteArray CustomisationGenerator::generateSystemdScript(const QVariantMap& s, const QString& piConnectToken) {
+QByteArray CustomisationGenerator::generateSystemdScript(const QVariantMap& s,
+                                                        const QString& piConnectToken,
+                                                        const QString& firstrunPath,
+                                                        const QString& cmdlinePath) {
     QByteArray script;
     auto line = [](const QString& l, QByteArray& out) { out += l.toUtf8(); out += '\n'; };
 
+    const auto defaultPaths = systemdFirstrunPathsForReleaseDate(QString());
+    const QString effectiveFirstrunPath = firstrunPath.isEmpty() ? defaultPaths.firstrunPath : firstrunPath;
+    const QString effectiveCmdlinePath = cmdlinePath.isEmpty() ? defaultPaths.cmdlinePath : cmdlinePath;
     const QString hostname = s.value("hostname").toString().trimmed();
     const QString timezone = s.value("timezone").toString().trimmed();
     const bool sshEnabled = s.value("sshEnabled").toBool();
@@ -316,8 +323,8 @@ QByteArray CustomisationGenerator::generateSystemdScript(const QVariantMap& s, c
     }
 
     // Final cleanup to mimic legacy behavior
-    line(QStringLiteral("rm -f /boot/firstrun.sh"), script);
-    line(QStringLiteral("sed -i 's| systemd.run.*||g' /boot/cmdline.txt"), script);
+    line(QStringLiteral("rm -f ") + effectiveFirstrunPath, script);
+    line(QStringLiteral("sed -i 's| systemd.run.*||g' ") + effectiveCmdlinePath, script);
     line(QStringLiteral("exit 0"), script);
 
     return script;
@@ -661,4 +668,3 @@ QByteArray CustomisationGenerator::generateCloudInitNetworkConfig(const QVariant
 }
 
 } // namespace rpi_imager
-
