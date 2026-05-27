@@ -6,6 +6,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_string.hpp>
 #include "customization_generator.h"
+#include "systemd_firstrun_paths.h"
 #include <QVariantMap>
 #include <QString>
 #include <QByteArray>
@@ -160,6 +161,38 @@ TEST_CASE("CustomisationGenerator includes cleanup at end", "[customization]") {
     REQUIRE_THAT(scriptStr.toStdString(), ContainsSubstring("rm -f /boot/firstrun.sh"));
     REQUIRE_THAT(scriptStr.toStdString(), ContainsSubstring("sed -i 's| systemd.run.*||g' /boot/cmdline.txt"));
     REQUIRE(scriptStr.endsWith("exit 0\n"));
+}
+
+TEST_CASE("Systemd firstrun paths keep old releases on /boot", "[customization][systemd-paths]") {
+    const auto paths = systemdFirstrunPathsForReleaseDate(QStringLiteral("2023-05-03"));
+
+    REQUIRE(paths.firstrunPath == QStringLiteral("/boot/firstrun.sh"));
+    REQUIRE(paths.cmdlinePath == QStringLiteral("/boot/cmdline.txt"));
+    REQUIRE_THAT(systemdFirstrunCmdlineAppend(paths.firstrunPath).toStdString(),
+                 ContainsSubstring("systemd.run=/boot/firstrun.sh"));
+}
+
+TEST_CASE("Systemd firstrun paths use firmware mount for Bookworm and newer", "[customization][systemd-paths]") {
+    const auto paths = systemdFirstrunPathsForReleaseDate(QStringLiteral("2023-10-11"));
+
+    REQUIRE(paths.firstrunPath == QStringLiteral("/boot/firmware/firstrun.sh"));
+    REQUIRE(paths.cmdlinePath == QStringLiteral("/boot/firmware/cmdline.txt"));
+    REQUIRE_THAT(systemdFirstrunCmdlineAppend(paths.firstrunPath).toStdString(),
+                 ContainsSubstring("systemd.run=/boot/firmware/firstrun.sh"));
+}
+
+TEST_CASE("CustomisationGenerator cleanup uses supplied Bookworm paths", "[customization][systemd-paths]") {
+    QVariantMap settings;
+    settings["hostname"] = "test";
+    const auto paths = systemdFirstrunPathsForReleaseDate(QStringLiteral("2024-03-15"));
+
+    QByteArray script = CustomisationGenerator::generateSystemdScript(
+        settings, QString(), paths.firstrunPath, paths.cmdlinePath);
+    QString scriptStr = QString::fromUtf8(script);
+
+    REQUIRE_THAT(scriptStr.toStdString(), ContainsSubstring("rm -f /boot/firmware/firstrun.sh"));
+    REQUIRE_THAT(scriptStr.toStdString(), ContainsSubstring("sed -i 's| systemd.run.*||g' /boot/firmware/cmdline.txt"));
+    REQUIRE_FALSE(scriptStr.toStdString().find("sed -i 's| systemd.run.*||g' /boot/cmdline.txt") != std::string::npos);
 }
 
 TEST_CASE("CustomisationGenerator reference script comparison", "[customization][reference]") {
@@ -1636,4 +1669,3 @@ TEST_CASE("CustomisationGenerator cloud-init handles empty Pi Connect token", "[
     REQUIRE_FALSE(yaml.contains("write_files:"));
     REQUIRE_FALSE(yaml.contains(PI_CONNECT_CONFIG_PATH));
 }
-

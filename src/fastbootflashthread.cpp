@@ -13,6 +13,7 @@
 #include "acceleratedcryptographichash.h"
 #include "ringbuffer.h"
 #include "systemmemorymanager.h"
+#include "systemd_firstrun_paths.h"
 
 #include <QDateTime>
 #include <QDebug>
@@ -81,7 +82,8 @@ void FastbootFlashThread::setImageCustomisation(const QByteArray &config,
                                                   const QByteArray &firstrun,
                                                   const QByteArray &cloudinit,
                                                   const QByteArray &cloudinitNetwork,
-                                                  const QByteArray &initFormat)
+                                                  const QByteArray &initFormat,
+                                                  const QByteArray &systemdFirstrunPath)
 {
     _config = config;
     _cmdline = cmdline;
@@ -89,6 +91,7 @@ void FastbootFlashThread::setImageCustomisation(const QByteArray &config,
     _cloudinit = cloudinit;
     _cloudinitNetwork = cloudinitNetwork;
     _initFormat = initFormat;
+    _systemdFirstrunPath = systemdFirstrunPath;
 }
 
 void FastbootFlashThread::setConnectRegistration(const QString &apiKey,
@@ -180,9 +183,10 @@ bool FastbootFlashThread::applyCustomisation(fastboot::FastbootProtocol& fb,
                        .arg(QString::fromStdString(fb.lastError())));
             return false;
         }
-        cmdlineAppend += " systemd.run=/boot/firstrun.sh"
-                         " systemd.run_success_action=reboot"
-                         " systemd.unit=kernel-command-line.target";
+        const QString firstrunPath = _systemdFirstrunPath.isEmpty()
+                                     ? rpi_imager::systemdFirstrunPathsForReleaseDate(QString()).firstrunPath
+                                     : QString::fromUtf8(_systemdFirstrunPath);
+        cmdlineAppend += rpi_imager::systemdFirstrunCmdlineAppend(firstrunPath);
     }
 
     // ── cloud-init files ──

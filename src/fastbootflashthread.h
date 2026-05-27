@@ -46,7 +46,8 @@ public:
                                 const QByteArray &firstrun,
                                 const QByteArray &cloudinit,
                                 const QByteArray &cloudinitNetwork,
-                                const QByteArray &initFormat);
+                                const QByteArray &initFormat,
+                                const QByteArray &systemdFirstrunPath = {});
 
     // Set optional bmap URL for DONT_CARE block optimisation.
     // When set, unmapped blocks are skipped during fastboot flash.
@@ -110,6 +111,7 @@ private:
     QByteArray _cloudinit;
     QByteArray _cloudinitNetwork;
     QByteArray _initFormat;
+    QByteArray _systemdFirstrunPath;
 
     // Raspberry Pi Connect Device Identity registration (optional)
     QString _connectApiKey;
