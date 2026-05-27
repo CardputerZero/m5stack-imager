@@ -10,15 +10,18 @@
 
 #include "fastboot/fastboot_protocol.h"
 #include "rpiboot/test/mock_usb_transport.h"
+#include "systemd_firstrun_paths.h"
 
 #include <QByteArray>
 #include <QList>
+#include <QString>
 
 #include <atomic>
 #include <cstring>
 
 using namespace fastboot;
 using namespace rpiboot::testing;
+using namespace rpi_imager;
 
 // ── Helper: create a fastboot response packet ──────────────────────────
 
@@ -963,9 +966,8 @@ TEST_CASE("Customisation pattern: cmdline.txt append with firstrun params", "[fa
                                      static_cast<int>(cmdlineData.size())).trimmed();
 
     // Append systemd firstrun params
-    QByteArray cmdlineAppend = " systemd.run=/boot/firstrun.sh"
-                               " systemd.run_success_action=reboot"
-                               " systemd.unit=kernel-command-line.target";
+    QByteArray cmdlineAppend = systemdFirstrunCmdlineAppend(
+        systemdFirstrunPathsForReleaseDate(QStringLiteral("2023-10-11")).firstrunPath);
     cmdline += cmdlineAppend;
 
     // Queue write
@@ -981,7 +983,7 @@ TEST_CASE("Customisation pattern: cmdline.txt append with firstrun params", "[fa
     // Verify the modification
     std::string modified(cmdline.constData(), static_cast<size_t>(cmdline.size()));
     CHECK(modified.find("rootwait") != std::string::npos);
-    CHECK(modified.find("systemd.run=/boot/firstrun.sh") != std::string::npos);
+    CHECK(modified.find("systemd.run=/boot/firmware/firstrun.sh") != std::string::npos);
     CHECK(modified.find("systemd.unit=kernel-command-line.target") != std::string::npos);
     // Should be a single line (trimmed + appended, no trailing newline in middle)
     CHECK(modified.find('\n') == std::string::npos);

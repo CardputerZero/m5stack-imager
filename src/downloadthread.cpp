@@ -9,6 +9,7 @@
 #include "devicewrapper.h"
 #include "devicewrapperfatpartition.h"
 #include "systemmemorymanager.h"
+#include "systemd_firstrun_paths.h"
 #include "timeout_utils.h"
 #include "platformquirks.h"
 #include "drivelist/drivelist.h"
@@ -2201,7 +2202,7 @@ qint64 DownloadThread::_sectorsWritten()
     return -1;
 }
 
-void DownloadThread::setImageCustomisation(const QByteArray &config, const QByteArray &cmdline, const QByteArray &firstrun, const QByteArray &cloudinit, const QByteArray &cloudInitNetwork, const QByteArray &initFormat, const ImageOptions::AdvancedOptions opts)
+void DownloadThread::setImageCustomisation(const QByteArray &config, const QByteArray &cmdline, const QByteArray &firstrun, const QByteArray &cloudinit, const QByteArray &cloudInitNetwork, const QByteArray &initFormat, const ImageOptions::AdvancedOptions opts, const QByteArray &systemdFirstrunPath)
 {
     _config = config;
     _cmdline = cmdline;
@@ -2209,6 +2210,7 @@ void DownloadThread::setImageCustomisation(const QByteArray &config, const QByte
     _cloudinit = cloudinit;
     _cloudinitNetwork = cloudInitNetwork;
     _initFormat = initFormat;
+    _systemdFirstrunPath = systemdFirstrunPath;
     _advancedOptions = opts;
     qDebug() << "DownloadThread::setImageCustomisation - initFormat:" << initFormat << "cloudinit empty:" << cloudinit.isEmpty() << "cloudinitNetwork empty:" << cloudInitNetwork.isEmpty();
 }
@@ -2356,7 +2358,10 @@ bool DownloadThread::_customizeImage()
             // No need to add them here anymore
             if (_initFormat == "systemd") {
                 fat->writeFile("firstrun.sh", _firstrun);
-                _cmdline += " systemd.run=/boot/firstrun.sh systemd.run_success_action=reboot systemd.unit=kernel-command-line.target";
+                const QString firstrunPath = _systemdFirstrunPath.isEmpty()
+                                             ? rpi_imager::systemdFirstrunPathsForReleaseDate(QString()).firstrunPath
+                                             : QString::fromUtf8(_systemdFirstrunPath);
+                _cmdline += rpi_imager::systemdFirstrunCmdlineAppend(firstrunPath);
             }
         }
 

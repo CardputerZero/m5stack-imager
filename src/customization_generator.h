@@ -33,8 +33,10 @@ public:
      * @param piConnectToken Optional Raspberry Pi Connect token
      * @return QByteArray containing the generated script
      */
-    static QByteArray generateSystemdScript(const QVariantMap& settings, 
-                                           const QString& piConnectToken = QString());
+    static QByteArray generateSystemdScript(const QVariantMap& settings,
+                                           const QString& piConnectToken = QString(),
+                                           const QString& firstrunPath = QString(),
+                                           const QString& cmdlinePath = QString());
     
     /**
      * @brief Generate cloud-init user-data YAML from settings
@@ -96,4 +98,3 @@ private:
 } // namespace rpi_imager
 
 #endif // CUSTOMIZATION_GENERATOR_H
-

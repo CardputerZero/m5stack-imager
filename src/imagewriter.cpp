@@ -12,6 +12,7 @@
 #include "file_operations.h"
 #include "drivelistitem.h"
 #include "customization_generator.h"
+#include "systemd_firstrun_paths.h"
 #include "drivelist/drivelist.h"
 #include "dependencies/sha256crypt/sha256crypt.h"
 #include "dependencies/yescrypt/yescrypt_wrapper.h"
@@ -109,7 +110,7 @@ ImageWriter::ImageWriter(QObject *parent)
       _waitingForCacheVerification(false),
       _src(), _repo(QUrl(QString(OSLIST_URL))),
       _dst(), _parentCategory(), _osName(), _osReleaseDate(), _currentLang(), _currentLangcode(), _currentKeyboard(),
-      _expectedHash(), _cmdline(), _config(), _firstrun(), _cloudinit(), _cloudinitNetwork(), _initFormat(),
+      _expectedHash(), _cmdline(), _config(), _firstrun(), _cloudinit(), _cloudinitNetwork(), _initFormat(), _systemdFirstrunPath(),
       _downloadLen(0), _extrLen(0), _devLen(0), _dlnow(0), _verifynow(0),
       _drivelist(DriveListModel(this)), // explicitly parented, so QML doesn't delete it
       _selectedDeviceValid(false),
@@ -780,7 +781,7 @@ void ImageWriter::onRpibootFastbootReady(const QString &fastbootId)
 
     // Start FastbootFlashThread
     _fastbootFlashThread = new FastbootFlashThread(fastbootId, QStringLiteral("mmcblk0"), flashSrc, _downloadLen, _extrLen, _expectedHash, this);
-    _fastbootFlashThread->setImageCustomisation(_config, _cmdline, _firstrun, _cloudinit, _cloudinitNetwork, _initFormat);
+    _fastbootFlashThread->setImageCustomisation(_config, _cmdline, _firstrun, _cloudinit, _cloudinitNetwork, _initFormat, _systemdFirstrunPath);
     if (!_bmapUrl.isEmpty())
         _fastbootFlashThread->setBmapUrl(QUrl(_bmapUrl));
 
@@ -975,7 +976,7 @@ void ImageWriter::startWrite()
         emit preparationStatusUpdate(tr("Starting fastboot flash..."));
         _fastbootFlashThread = new FastbootFlashThread(
             _fastbootId, _fastbootBlockDevice, _src, _downloadLen, _extrLen, _expectedHash, this);
-        _fastbootFlashThread->setImageCustomisation(_config, _cmdline, _firstrun, _cloudinit, _cloudinitNetwork, _initFormat);
+        _fastbootFlashThread->setImageCustomisation(_config, _cmdline, _firstrun, _cloudinit, _cloudinitNetwork, _initFormat, _systemdFirstrunPath);
         if (!_bmapUrl.isEmpty())
             _fastbootFlashThread->setBmapUrl(QUrl(_bmapUrl));
         // Same Connect-org wire-up as the rpiboot path: when the user
@@ -1636,7 +1637,7 @@ void ImageWriter::startWrite()
     _thread->setVerifyEnabled(_verifyEnabled);
     _thread->setUserAgent(QString("Mozilla/5.0 rpi-imager/%1").arg(staticVersion()).toUtf8());
     qDebug() << "startWrite: Passing to thread - initFormat:" << _initFormat << "cloudinit empty:" << _cloudinit.isEmpty() << "cloudinitNetwork empty:" << _cloudinitNetwork.isEmpty();
-    _thread->setImageCustomisation(_config, _cmdline, _firstrun, _cloudinit, _cloudinitNetwork, _initFormat, _advancedOptions);
+    _thread->setImageCustomisation(_config, _cmdline, _firstrun, _cloudinit, _cloudinitNetwork, _initFormat, _advancedOptions, _systemdFirstrunPath);
     
     // Pass debug options to the thread
     _thread->setDebugDirectIO(_debugDirectIO);
@@ -3775,7 +3776,7 @@ bool ImageWriter::isSecureBootForcedByCliFlag() const
     return _forceSecureBootEnabled;
 }
 
-void ImageWriter::setImageCustomisation(const QByteArray &config, const QByteArray &cmdline, const QByteArray &firstrun, const QByteArray &cloudinit, const QByteArray &cloudinitNetwork, const ImageOptions::AdvancedOptions opts, const QByteArray &initFormat)
+void ImageWriter::setImageCustomisation(const QByteArray &config, const QByteArray &cmdline, const QByteArray &firstrun, const QByteArray &cloudinit, const QByteArray &cloudinitNetwork, const ImageOptions::AdvancedOptions opts, const QByteArray &initFormat, const QByteArray &systemdFirstrunPath)
 {
     _config = config;
     _cmdline = cmdline;
@@ -3783,11 +3784,15 @@ void ImageWriter::setImageCustomisation(const QByteArray &config, const QByteArr
     _cloudinit = cloudinit;
     _cloudinitNetwork = cloudinitNetwork;
     _advancedOptions = opts;
+    _systemdFirstrunPath = systemdFirstrunPath;
     
     // If initFormat is provided, use it; otherwise keep current value
     // This allows CLI to explicitly set the format along with content
     if (!initFormat.isEmpty()) {
         _initFormat = initFormat;
+    }
+    if (_systemdFirstrunPath.isEmpty() && !_firstrun.isEmpty() && _initFormat == "systemd") {
+        _systemdFirstrunPath = rpi_imager::systemdFirstrunPathsForReleaseDate(_osReleaseDate).firstrunPath.toUtf8();
     }
 
     qDebug() << "Custom config.txt entries:" << config;
@@ -3820,8 +3825,11 @@ void ImageWriter::applyCustomisationFromSettings(const QVariantMap &settings)
 
 void ImageWriter::_applySystemdCustomisationFromSettings(const QVariantMap &s)
 {
+    const auto paths = rpi_imager::systemdFirstrunPathsForReleaseDate(_osReleaseDate);
+
     // Use CustomisationGenerator for script generation
-    QByteArray script = rpi_imager::CustomisationGenerator::generateSystemdScript(s, _piConnectToken);
+    QByteArray script = rpi_imager::CustomisationGenerator::generateSystemdScript(
+        s, _piConnectToken, paths.firstrunPath, paths.cmdlinePath);
 
     QByteArray cmdlineAppend;
     ImageOptions::AdvancedOptions advOpts = NoAdvancedOptions;
@@ -3843,7 +3851,8 @@ void ImageWriter::_applySystemdCustomisationFromSettings(const QVariantMap &s)
         }
     }
 
-    setImageCustomisation(QByteArray(), cmdlineAppend, script, QByteArray(), QByteArray(), advOpts);
+    setImageCustomisation(QByteArray(), cmdlineAppend, script, QByteArray(), QByteArray(), advOpts,
+                          QByteArray(), paths.firstrunPath.toUtf8());
 }
 
 void ImageWriter::_applyCloudInitCustomisationFromSettings(const QVariantMap &s)
@@ -4684,7 +4693,7 @@ void ImageWriter::_continueStartWriteAfterCacheVerification(bool cacheIsValid)
     _thread->setVerifyEnabled(_verifyEnabled);
     _thread->setUserAgent(QString("Mozilla/5.0 rpi-imager/%1").arg(staticVersion()).toUtf8());
     qDebug() << "_continueStartWrite: Passing to thread - initFormat:" << _initFormat << "cloudinit empty:" << _cloudinit.isEmpty() << "cloudinitNetwork empty:" << _cloudinitNetwork.isEmpty();
-    _thread->setImageCustomisation(_config, _cmdline, _firstrun, _cloudinit, _cloudinitNetwork, _initFormat, _advancedOptions);
+    _thread->setImageCustomisation(_config, _cmdline, _firstrun, _cloudinit, _cloudinitNetwork, _initFormat, _advancedOptions, _systemdFirstrunPath);
     
     // Pass debug options to the thread
     _thread->setDebugDirectIO(_debugDirectIO);
