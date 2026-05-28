@@ -1,8 +1,7 @@
 # macOS platform-specific sources and link settings
 
 # Set up icon resources
-# We use pre-compiled icon assets for dark mode/Liquid Glass support (macOS Tahoe+)
-# These are generated from app_icon_macos.icon using compile-icon.sh
+# We use pre-compiled icon assets generated from src/icons/app_icon.png.
 # The actual installation happens in PlatformPackaging.cmake after macdeployqt runs
 set(PRECOMPILED_ICNS "${CMAKE_CURRENT_SOURCE_DIR}/icons/AppIcon-compiled.icns")
 if(EXISTS "${PRECOMPILED_ICNS}" AND NOT BUILD_CLI_ONLY)
@@ -59,5 +58,4 @@ find_library(SystemConfiguration SystemConfiguration)
 find_library(CoreWLAN CoreWLAN)
 find_library(CoreLocation CoreLocation)
 set(EXTRALIBS ${EXTRALIBS} ${CoreFoundation} ${DiskArbitration} ${Security} ${Cocoa} ${IOKit} ${SystemConfiguration} ${CoreWLAN} ${CoreLocation} iconv)
-
 

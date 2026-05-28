@@ -186,9 +186,7 @@ add_custom_command(TARGET ${PROJECT_NAME}
     COMMENT "Removing unused QML theme directories and modules (keeping Material theme + Basic fallback)"
 )
 
-# Install pre-compiled icon assets for dark mode + Liquid Glass support (macOS Tahoe+)
-# These were compiled from app_icon_macos.icon using Xcode's actool via a helper project
-# The pre-compiled Assets.car properly contains all appearance variants (light/dark/tinted)
+# Install pre-compiled icon assets generated from src/icons/app_icon.png.
 set(PRECOMPILED_ASSETS_CAR "${CMAKE_CURRENT_SOURCE_DIR}/icons/AppIcon-compiled.car")
 set(PRECOMPILED_ICNS "${CMAKE_CURRENT_SOURCE_DIR}/icons/AppIcon-compiled.icns")
 if(EXISTS "${PRECOMPILED_ASSETS_CAR}" AND NOT BUILD_CLI_ONLY)
@@ -288,4 +286,3 @@ endif()
 
     message(STATUS "Added 'dmg' target to build the macOS DMG installer")
 endif() # BUILD_CLI_ONLY
-

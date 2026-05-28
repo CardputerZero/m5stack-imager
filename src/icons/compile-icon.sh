@@ -1,12 +1,9 @@
 #!/bin/bash
 #
-# compile-icon.sh - Compile the Icon Composer .icon file into Assets.car
+# compile-icon.sh - Compile the M5 Imager PNG app icon into Assets.car and .icns
 #
-# This script uses a minimal Xcode project to compile app_icon_macos.icon
-# into Assets.car with proper support for:
-#   - Dark mode (NSAppearanceNameDarkAqua)
-#   - Tinted appearance (ISAppearanceTintable)  
-#   - Liquid Glass rendering (macOS Tahoe+)
+# This script generates a standard macOS AppIcon asset catalog from app_icon.png,
+# then compiles it into Assets.car and AppIcon.icns.
 #
 # The compiled outputs are:
 #   - AppIcon-compiled.car  (Assets.car with all icon variants)
@@ -15,16 +12,79 @@
 # Usage: ./compile-icon.sh
 #
 # Requirements:
-#   - Xcode with command line tools installed
-#   - app_icon_macos.icon in the same directory
+#   - Xcode command line tools installed
+#   - app_icon.png in the same directory
 #
 
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ICON_SOURCE="${SCRIPT_DIR}/app_icon_macos.icon"
+PNG_ICON_SOURCE="${SCRIPT_DIR}/app_icon.png"
 XCODE_PROJECT_DIR="${SCRIPT_DIR}/xcode-icon-compiler"
 BUILD_DIR="${XCODE_PROJECT_DIR}/build"
+
+if [ -f "${PNG_ICON_SOURCE}" ]; then
+    TMPDIR="$(mktemp -d)"
+    trap 'rm -rf "${TMPDIR}"' EXIT
+
+    ICONSET="${TMPDIR}/AppIcon.iconset"
+    XCASSETS="${TMPDIR}/AppIcon.xcassets"
+    APPICONSET="${XCASSETS}/AppIcon.appiconset"
+    mkdir -p "${ICONSET}" "${APPICONSET}"
+
+    make_icon() {
+        local size="$1"
+        local name="$2"
+        sips -z "${size}" "${size}" "${PNG_ICON_SOURCE}" --out "${ICONSET}/${name}" >/dev/null
+    }
+
+    make_icon 16 icon_16x16.png
+    make_icon 32 icon_16x16@2x.png
+    make_icon 32 icon_32x32.png
+    make_icon 64 icon_32x32@2x.png
+    make_icon 128 icon_128x128.png
+    make_icon 256 icon_128x128@2x.png
+    make_icon 256 icon_256x256.png
+    make_icon 512 icon_256x256@2x.png
+    make_icon 512 icon_512x512.png
+    make_icon 1024 icon_512x512@2x.png
+
+    iconutil --convert icns --output "${SCRIPT_DIR}/AppIcon-compiled.icns" "${ICONSET}"
+    cp "${ICONSET}"/*.png "${APPICONSET}/"
+
+    cat > "${APPICONSET}/Contents.json" <<'JSON'
+{
+  "images": [
+    { "idiom": "mac", "size": "16x16", "scale": "1x", "filename": "icon_16x16.png" },
+    { "idiom": "mac", "size": "16x16", "scale": "2x", "filename": "icon_16x16@2x.png" },
+    { "idiom": "mac", "size": "32x32", "scale": "1x", "filename": "icon_32x32.png" },
+    { "idiom": "mac", "size": "32x32", "scale": "2x", "filename": "icon_32x32@2x.png" },
+    { "idiom": "mac", "size": "128x128", "scale": "1x", "filename": "icon_128x128.png" },
+    { "idiom": "mac", "size": "128x128", "scale": "2x", "filename": "icon_128x128@2x.png" },
+    { "idiom": "mac", "size": "256x256", "scale": "1x", "filename": "icon_256x256.png" },
+    { "idiom": "mac", "size": "256x256", "scale": "2x", "filename": "icon_256x256@2x.png" },
+    { "idiom": "mac", "size": "512x512", "scale": "1x", "filename": "icon_512x512.png" },
+    { "idiom": "mac", "size": "512x512", "scale": "2x", "filename": "icon_512x512@2x.png" }
+  ],
+  "info": { "author": "xcode", "version": 1 }
+}
+JSON
+
+    mkdir -p "${TMPDIR}/compiled"
+    actool "${XCASSETS}" \
+        --compile "${TMPDIR}/compiled" \
+        --platform macosx \
+        --minimum-deployment-target 12.0 \
+        --app-icon AppIcon \
+        --output-partial-info-plist "${TMPDIR}/partial.plist" >/dev/null
+    cp "${TMPDIR}/compiled/Assets.car" "${SCRIPT_DIR}/AppIcon-compiled.car"
+
+    echo "Successfully compiled icon assets from ${PNG_ICON_SOURCE}:"
+    echo "  - ${SCRIPT_DIR}/AppIcon-compiled.car"
+    echo "  - ${SCRIPT_DIR}/AppIcon-compiled.icns"
+    exit 0
+fi
 
 # Verify source icon exists
 if [ ! -d "${ICON_SOURCE}" ]; then

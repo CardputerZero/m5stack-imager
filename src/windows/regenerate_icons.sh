@@ -16,11 +16,7 @@ if command -v magick &> /dev/null; then
 elif command -v convert &> /dev/null; then
     CONVERT_CMD="convert"
 else
-    echo "Error: ImageMagick not found. Please install ImageMagick."
-    echo "  macOS: brew install imagemagick"
-    echo "  Ubuntu/Debian: sudo apt install imagemagick"
-    echo "  Windows: https://imagemagick.org/script/download.php"
-    exit 1
+    CONVERT_CMD=""
 fi
 
 # Windows .ico supports these sizes (in order of preference for Windows)
@@ -28,7 +24,11 @@ fi
 SIZES=(16 20 24 32 40 48 64 256)
 
 echo "Generating Windows icon from PNGs..."
-echo "Using ImageMagick: $CONVERT_CMD"
+if [[ -n "$CONVERT_CMD" ]]; then
+    echo "Using ImageMagick: $CONVERT_CMD"
+else
+    echo "Using Python ICO writer fallback"
+fi
 echo ""
 
 # Build list of input files (only use sizes that Windows actually uses)
@@ -48,12 +48,45 @@ if [[ -z "$INPUT_FILES" ]]; then
     exit 1
 fi
 
-# Generate .ico file
-# The -colors 256 ensures compatibility, but modern Windows handles true color fine
 echo ""
 echo "Creating ${OUTPUT_ICO}..."
 
-eval "$CONVERT_CMD" $INPUT_FILES "${OUTPUT_ICO}"
+if [[ -n "$CONVERT_CMD" ]]; then
+    eval "$CONVERT_CMD" $INPUT_FILES "${OUTPUT_ICO}"
+else
+    python3 - "$ICON_DIR" "$OUTPUT_ICO" "${SIZES[@]}" <<'PY'
+import struct
+import sys
+from pathlib import Path
+
+icon_dir = Path(sys.argv[1])
+output_ico = Path(sys.argv[2])
+sizes = [int(v) for v in sys.argv[3:]]
+images = []
+
+for size in sizes:
+    png_file = icon_dir / f"Windows imager icon Full hight_WIN {size}x{size}.png"
+    if png_file.exists():
+        images.append((size, png_file.read_bytes()))
+
+if not images:
+    raise SystemExit(f"No PNG icon files found in {icon_dir}")
+
+header = struct.pack("<HHH", 0, 1, len(images))
+offset = 6 + 16 * len(images)
+entries = []
+payload = []
+
+for size, data in images:
+    width = size if size < 256 else 0
+    height = size if size < 256 else 0
+    entries.append(struct.pack("<BBBBHHII", width, height, 0, 0, 1, 32, len(data), offset))
+    payload.append(data)
+    offset += len(data)
+
+output_ico.write_bytes(header + b"".join(entries) + b"".join(payload))
+PY
+fi
 
 if [[ -f "$OUTPUT_ICO" ]]; then
     echo ""
@@ -63,5 +96,3 @@ else
     echo "Error: Failed to create ${OUTPUT_ICO}"
     exit 1
 fi
-
-
