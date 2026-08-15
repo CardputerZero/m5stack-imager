@@ -28,7 +28,7 @@ Item {
 
     // === COLORS ===
     readonly property color mainBackgroundColor: "#ffffff"
-    readonly property color raspberryRed: "#ab1e3a"
+    readonly property color raspberryRed: "#0077c8"
     readonly property color transparent: "transparent"
 
     readonly property color buttonBackgroundColor: mainBackgroundColor
@@ -39,12 +39,12 @@ Item {
     readonly property color button2BackgroundColor: raspberryRed
     readonly property color button2ForegroundColor: mainBackgroundColor
     // Focused: noticeably darker for strong state indication (keyboard focus)
-    readonly property color button2FocusedBackgroundColor: "#8f122c"
+    readonly property color button2FocusedBackgroundColor: "#005a99"
     // Hovered: noticeably lighter to differentiate from base (≥4.5:1 contrast vs base)
-    readonly property color button2HoveredBackgroundColor: "#eac7ce"
-    // Hovered foreground should be Raspberry Red for ≥4.5:1 contrast on the light hover bg
+    readonly property color button2HoveredBackgroundColor: "#f7fbfe"
+    // Hovered foreground should use the primary blue for ≥4.5:1 contrast on the light hover bg
     readonly property color button2HoveredForegroundColor: raspberryRed
-    readonly property color raspberryRedHighlight: "#d64561"
+    readonly property color raspberryRedHighlight: "#2497dc"
 
     readonly property color titleBackgroundColor: "#f5f5f5"
     readonly property color titleSeparatorColor: "#afafaf"
