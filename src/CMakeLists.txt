@@ -352,6 +352,22 @@ if(GENERATE_TIMEZONES_FROM_IANA)
             -DTZDATA_DIR=${CMAKE_CURRENT_BINARY_DIR}/tzdata
     )
     list(APPEND SOURCES "${GENERATED_TZ_QRC}")
+else()
+    # When IANA generation is disabled, embed the static fallback timezone list
+    set(TZ_STATIC_QRC "${CMAKE_CURRENT_BINARY_DIR}/timezones_static.qrc")
+    file(GENERATE OUTPUT "${TZ_STATIC_QRC}" CONTENT
+"<RCC>\n  <qresource prefix=\"/\">\n    <file alias=\"timezones.txt\">${CMAKE_CURRENT_SOURCE_DIR}/timezones.txt</file>\n  </qresource>\n</RCC>\n"
+        NEWLINE_STYLE UNIX)
+    set(rcc_tz_cpp "${CMAKE_CURRENT_BINARY_DIR}/qrc_timezones_static.cpp")
+    add_custom_command(
+        OUTPUT ${rcc_tz_cpp}
+        COMMAND Qt6::rcc --no-zstd -name timezones_static -o ${rcc_tz_cpp} ${TZ_STATIC_QRC}
+        DEPENDS ${TZ_STATIC_QRC} ${CMAKE_CURRENT_SOURCE_DIR}/timezones.txt
+        VERBATIM
+        COMMENT "Running rcc for timezones_static"
+    )
+    set_source_files_properties("${rcc_tz_cpp}" PROPERTIES GENERATED TRUE)
+    list(APPEND SOURCES "${rcc_tz_cpp}")
 endif()
 
 option(GENERATE_COUNTRIES_FROM_REGDB "Generate countries list from latest wireless-regdb" ON)
