@@ -4,13 +4,15 @@
     "url": "https://m5stack.com",
     "devices": [
       {
-        "name": "CM4Stack",
-        "description": "M5Stack host based on Raspberry Pi Compute Module 4.",
+        "name": "CardputerZero",
+        "description": "M5Stack pocket Raspberry Pi Zero 2W computer.",
+        "icon": "https://cardputer-zero-repo.oss-cn-shenzhen.aliyuncs.com/icons/cardputerzero.png",
         "tags": [
-          "m5-cm4stack",
-          "pi4-64bit",
-          "pi4-32bit"
+          "m5-cardputerzero",
+          "pi3-64bit",
+          "pi3-32bit"
         ],
+        "default": true,
         "matching_type": "exclusive",
         "architecture": "armv8",
         "capabilities": [
@@ -21,15 +23,14 @@
         ]
       },
       {
-        "name": "CardputerZero",
-        "description": "M5Stack pocket Raspberry Pi Zero 2W computer.",
-        "icon": "https://cardputer-zero-repo.oss-cn-shenzhen.aliyuncs.com/icons/cardputerzero.png",
+        "name": "CM4Stack",
+        "description": "M5Stack host based on Raspberry Pi Compute Module 4.",
+        "icon": "https://cardputer-zero-repo.oss-cn-shenzhen.aliyuncs.com/icons/cm4stack.png",
         "tags": [
-          "m5-cardputerzero",
-          "pi3-64bit",
-          "pi3-32bit"
+          "m5-cm4stack",
+          "pi4-64bit",
+          "pi4-32bit"
         ],
-        "default": true,
         "matching_type": "exclusive",
         "architecture": "armv8",
         "capabilities": [
