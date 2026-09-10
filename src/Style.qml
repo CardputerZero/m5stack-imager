@@ -33,7 +33,7 @@ Item {
 
     readonly property color buttonBackgroundColor: mainBackgroundColor
     readonly property color buttonForegroundColor: raspberryRed
-    readonly property color buttonFocusedBackgroundColor: "#d1dcfb"
+    readonly property color buttonFocusedBackgroundColor: "#e6f3fb"
     readonly property color buttonHoveredBackgroundColor: "#f2f2f2"
 
     readonly property color button2BackgroundColor: raspberryRed
@@ -41,7 +41,7 @@ Item {
     // Focused: noticeably darker for strong state indication (keyboard focus)
     readonly property color button2FocusedBackgroundColor: "#005a99"
     // Hovered: noticeably lighter to differentiate from base (≥4.5:1 contrast vs base)
-    readonly property color button2HoveredBackgroundColor: "#f7fbfe"
+    readonly property color button2HoveredBackgroundColor: "#e6f3fb"
     // Hovered foreground should use the primary blue for ≥4.5:1 contrast on the light hover bg
     readonly property color button2HoveredForegroundColor: raspberryRed
     readonly property color raspberryRedHighlight: "#2497dc"
@@ -53,7 +53,7 @@ Item {
     readonly property color listViewRowBackgroundColor: "#ffffff"
     readonly property color listViewHoverRowBackgroundColor: titleBackgroundColor
     // Selection highlight color for OS/device lists
-    readonly property color listViewHighlightColor: "#BACCE7"
+    readonly property color listViewHighlightColor: "#e6f3fb"
 
     // Utility translucent colors
     readonly property color translucentWhite10: Qt.rgba(255, 255, 255, 0.1)
@@ -91,12 +91,12 @@ Item {
     readonly property color formLabelErrorColor: "red"
     readonly property color formLabelDisabledColor: "grey"
     // Active color for radio buttons, checkboxes, and switches
-    readonly property color formControlActiveColor: "#1955AE"
+    readonly property color formControlActiveColor: "#0077c8"
 
     readonly property color embeddedModeInfoTextColor: "#ffffff"
 
     // Focus/outline
-    readonly property color focusOutlineColor: "#0078d4"
+    readonly property color focusOutlineColor: "#0077c8"
     readonly property int focusOutlineWidth: 2
     readonly property int focusOutlineRadius: 4
     readonly property int focusOutlineMargin: -4
