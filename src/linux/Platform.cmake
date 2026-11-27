@@ -23,6 +23,8 @@ set(PLATFORM_SOURCES
     linux/rsakeyfingerprint_linux.cpp
     linux/file_operations_linux.cpp
     linux/platformquirks_linux.cpp
+    linux/x11hostaccess.h
+    linux/x11hostaccess.cpp
 )
 
 # Only include DBus-dependent and GUI components for non-CLI builds
