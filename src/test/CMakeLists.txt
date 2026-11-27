@@ -231,6 +231,9 @@ elseif(APPLE)
 else()
     set(PLATFORMQUIRKS_SOURCES
         ${CMAKE_CURRENT_SOURCE_DIR}/../linux/platformquirks_linux.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/../linux/x11hostaccess.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/../linux/x11hostaccess.cpp
+        x11hostaccess_test.cpp
     )
     set(PLATFORMQUIRKS_LIBS "")
 endif()

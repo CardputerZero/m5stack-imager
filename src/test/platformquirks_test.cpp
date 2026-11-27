@@ -10,6 +10,7 @@
 #include <catch2/matchers/catch_matchers_string.hpp>
 #include <QtGlobal>
 #include <QString>
+#include <unistd.h>
 #include "platformquirks.h"
 
 using Catch::Matchers::ContainsSubstring;

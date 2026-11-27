@@ -12,6 +12,8 @@
  */
 
 #include "../platformquirks.h"
+#include "x11hostaccess.h"
+#include <cerrno>
 #include <cstdlib>
 #include <unistd.h>
 #include <pwd.h>
@@ -160,24 +162,68 @@ namespace {
         return nullptr;
     }
 
-    // Grant root access to the user's X11 display via xhost.
+    // Grant root access to the user's X11 display by adding "si:localuser:root" to
+    // the X server's host access list, which is what `xhost +SI:localuser:root` does.
     // Must be run as the original (non-root) user who owns the display session,
     // since root doesn't yet have permission to connect.
+    // The X11 exchange is done in-process (X11HostAccess) rather than by running
+    // xhost(1): xhost is an optional package on several distributions, and when
+    // it is missing the elevated instance aborts with
+    // "qt.qpa.xcb: could not connect to display".
     // Uses +SI:localuser:root (server-interpreted, narrowly scoped to root only).
-    void grantRootDisplayAccess(uid_t uid, gid_t gid) {
+    void grantRootDisplayAccess(uid_t uid, gid_t gid, const char* originalHome) {
+        const char* display = ::getenv("DISPLAY");
+        X11HostAccess::GrantPlan plan;
+        char reason[X11HostAccess::kMaxReason];
+        if (!X11HostAccess::prepareGrant(display, ::getenv("XAUTHORITY"), originalHome, "root", plan,
+                                         reason, sizeof(reason))) {
+            std::fprintf(stderr, "Not granting root access to the X11 display: %s\n", reason);
+            return;
+        }
+
+        // The child reports what it saw (result or failure) through this pipe
+        int reportPipe[2];
+        if (pipe(reportPipe) != 0) {
+            reportPipe[0] = reportPipe[1] = -1;
+        }
+
         pid_t pid = fork();
-        if (pid < 0) return;
+        if (pid < 0) {
+            if (reportPipe[0] >= 0) {
+                close(reportPipe[0]);
+                close(reportPipe[1]);
+            }
+            return;
+        }
 
         if (pid == 0) {
             // POSIX: only async-signal-safe functions between fork() and exec()
-            if (setgid(gid) != 0) _exit(1);
-            if (setuid(uid) != 0) _exit(1);
-            execlp("xhost", "xhost", "+SI:localuser:root", nullptr);
-            _exit(127);
+            if (reportPipe[0] >= 0) close(reportPipe[0]);
+            if (setgid(gid) != 0) _exit(X11HostAccess::PrivilegeDropFailed);
+            if (setuid(uid) != 0) _exit(X11HostAccess::PrivilegeDropFailed);
+            X11HostAccess::runGrant(plan, reportPipe[1]);
         }
 
-        int status;
-        waitpid(pid, &status, 0);
+        char report[X11HostAccess::kMaxReason] = {0};
+        if (reportPipe[0] >= 0) {
+            close(reportPipe[1]);
+            size_t total = 0;
+            ssize_t n;
+            while (total < sizeof(report) - 1 &&
+                   (n = read(reportPipe[0], report + total, sizeof(report) - 1 - total)) > 0) {
+                total += static_cast<size_t>(n);
+            }
+            report[total] = '\0';
+            close(reportPipe[0]);
+        }
+
+        int status = 0;
+        while (waitpid(pid, &status, 0) < 0 && errno == EINTR) {}
+
+        const bool granted = X11HostAccess::describeOutcome(status, report, reason, sizeof(reason));
+        std::fprintf(stderr, granted ? "Granted root access to X11 display %s (%s)\n"
+                                     : "WARNING: could not grant root access to X11 display %s: %s\n",
+                     display, reason);
     }
 }
 
@@ -342,11 +388,11 @@ void applyQuirks() {
                     std::fprintf(stderr, "XAUTHORITY already set to: %s\n", currentXauthority);
                 }
                 
-                // If an X11 display is available, grant root access via xhost.
+                // If an X11 display is available, grant root access to it.
                 // This runs as the original user (who owns the display session)
                 // and must happen after DISPLAY and XAUTHORITY are configured.
                 if (::getenv("DISPLAY")) {
-                    grantRootDisplayAccess(originalUid, pwResult->pw_gid);
+                    grantRootDisplayAccess(originalUid, pwResult->pw_gid, pwResult->pw_dir);
                 }
                 
                 std::fprintf(stderr, "Set HOME to: %s\n", pwResult->pw_dir);
